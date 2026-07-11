@@ -18,17 +18,20 @@ def _num(value: float) -> str:
 
 def _top_table(scored: pd.DataFrame, top_n: int) -> str:
     rows = [
-        "| 排名 | 基金 | 综合评分 | 风险等级 | 决策辅助标签 | 年化收益率 | 年化波动率 | 最大回撤 | Sharpe | Calmar |",
-        "|---:|---|---:|---|---|---:|---:|---:|---:|---:|",
+        "| 排名 | 基金 | 类型 | 同类排名 | 综合评分 | 风险等级 | 数据质量 | 决策辅助标签 | 年化收益率 | 年化波动率 | 最大回撤 | Sharpe | Calmar |",
+        "|---:|---|---|---:|---:|---|---|---|---:|---:|---:|---:|---:|",
     ]
 
     for _, (fund, row) in enumerate(scored.head(top_n).iterrows(), start=1):
         rows.append(
-                "| {rank} | {fund} | {score} | {risk} | {label} | {ret} | {vol} | {dd} | {sharpe} | {calmar} |".format(
+                "| {rank} | {fund} | {fund_type} | {type_rank} | {score} | {risk} | {quality} | {label} | {ret} | {vol} | {dd} | {sharpe} | {calmar} |".format(
                 rank=int(row["rank"]),
                 fund=display_fund(str(fund), row),
+                fund_type=row.get("fund_type", "未分类"),
+                type_rank=row.get("type_rank", ""),
                 score=_num(row["composite_score"]),
                 risk=row.get("risk_level", ""),
+                quality=row.get("data_quality", ""),
                 label=row.get("decision_label", ""),
                 ret=_pct(row["annual_return"]),
                 vol=_pct(row["annual_volatility"]),
@@ -39,6 +42,13 @@ def _top_table(scored: pd.DataFrame, top_n: int) -> str:
         )
 
     return "\n".join(rows)
+
+
+def _explanation_lines(scored: pd.DataFrame, top_n: int) -> str:
+    lines = []
+    for fund, row in scored.head(min(top_n, 5)).iterrows():
+        lines.append(f"- {display_fund(str(fund), row)}：{row.get('result_explanation', row.get('decision_reason', ''))}")
+    return "\n".join(lines)
 
 
 def build_report(
@@ -89,6 +99,10 @@ def build_report(
 ## 决策辅助说明
 
 系统输出的 `重点观察`、`可观察`、`高回撤预警` 和 `暂不优先` 是基于历史净值指标的研究标签。它们适合用于缩小基金研究范围和辅助比较，不应被理解为直接买入、持有或卖出建议。
+
+## 结果解释
+
+{_explanation_lines(scored, top_n)}
 
 ## 生成图表
 

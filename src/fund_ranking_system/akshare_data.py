@@ -5,6 +5,8 @@ import time
 import akshare as ak
 import pandas as pd
 
+from .metadata import infer_fund_type
+
 
 def fetch_open_fund_list() -> pd.DataFrame:
     fund_list = ak.fund_open_fund_daily_em()
@@ -24,20 +26,23 @@ def fetch_fund_metadata(codes: list[str]) -> pd.DataFrame:
     metadata = fund_list[["基金代码", "基金简称"]].copy()
     metadata = metadata[metadata["基金代码"].isin(normalized_codes)]
     metadata = metadata.rename(columns={"基金代码": "fund_code", "基金简称": "fund_name"})
+    metadata["fund_type"] = metadata["fund_name"].apply(infer_fund_type)
     return metadata.sort_values("fund_code")
 
 
 def search_funds(keyword: str, limit: int = 20) -> pd.DataFrame:
     keyword = keyword.strip()
     if not keyword:
-        return pd.DataFrame(columns=["fund_code", "fund_name"])
+        return pd.DataFrame(columns=["fund_code", "fund_name", "fund_type"])
 
     fund_list = fetch_open_fund_list()
     mask = fund_list["基金代码"].str.contains(keyword, na=False) | fund_list["基金简称"].str.contains(
         keyword, na=False
     )
     result = fund_list.loc[mask, ["基金代码", "基金简称"]].head(limit).copy()
-    return result.rename(columns={"基金代码": "fund_code", "基金简称": "fund_name"})
+    result = result.rename(columns={"基金代码": "fund_code", "基金简称": "fund_name"})
+    result["fund_type"] = result["fund_name"].apply(infer_fund_type)
+    return result
 
 
 def fetch_fund_nav(code: str, start_date: str) -> pd.Series:

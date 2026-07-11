@@ -72,6 +72,11 @@ def run_pipeline(
     ranking_paths: dict[str, Path] = {}
     for profile_name, weights in DEFAULT_PROFILES.items():
         scored = score_funds(metrics, weights)
+        if "fund_type" in scored.columns:
+            scored["type_rank"] = scored.groupby("fund_type")["composite_score"].rank(
+                ascending=False,
+                method="min",
+            ).astype(int)
         scored = add_decision_labels(
             scored,
             min_observations=min_observations,

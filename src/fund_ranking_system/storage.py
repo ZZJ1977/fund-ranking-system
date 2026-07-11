@@ -22,19 +22,24 @@ class FundDatabase:
             return
 
         rows = [
-            (str(row["fund_code"]).zfill(6), str(row["fund_name"]))
+            (
+                str(row["fund_code"]).zfill(6),
+                str(row["fund_name"]),
+                str(row.get("fund_type", "未分类") or "未分类"),
+            )
             for _, row in metadata.iterrows()
         ]
         with self._connect() as conn:
             conn.executemany(
                 """
-                insert into funds (fund_code, fund_name, updated_at)
-                values (?, ?, ?)
+                insert into funds (fund_code, fund_name, fund_type, updated_at)
+                values (?, ?, ?, ?)
                 on conflict(fund_code) do update set
                     fund_name = excluded.fund_name,
+                    fund_type = excluded.fund_type,
                     updated_at = excluded.updated_at
                 """,
-                [(code, name, _now()) for code, name in rows],
+                [(code, name, fund_type, _now()) for code, name, fund_type in rows],
             )
 
     def save_nav(self, nav: pd.DataFrame) -> None:
@@ -82,7 +87,7 @@ class FundDatabase:
         normalized_codes = [code.zfill(6) for code in codes]
         placeholders = ",".join("?" for _ in normalized_codes)
         query = f"""
-            select fund_code, fund_name
+            select fund_code, fund_name, fund_type
             from funds
             where fund_code in ({placeholders})
             order by fund_code
@@ -91,7 +96,7 @@ class FundDatabase:
         with self._connect() as conn:
             rows = conn.execute(query, normalized_codes).fetchall()
 
-        return pd.DataFrame(rows, columns=["fund_code", "fund_name"])
+        return pd.DataFrame(rows, columns=["fund_code", "fund_name", "fund_type"])
 
     def cached_codes(self, codes: list[str], start_date: str, min_rows: int = 30) -> set[str]:
         normalized_codes = [code.zfill(6) for code in codes]
@@ -205,11 +210,11 @@ class FundDatabase:
             params = normalized
 
         query = f"""
-            select n.fund_code, coalesce(f.fund_name, ''), min(n.nav_date), max(n.nav_date), count(*)
+            select n.fund_code, coalesce(f.fund_name, ''), coalesce(f.fund_type, '未分类'), min(n.nav_date), max(n.nav_date), count(*)
             from fund_nav n
             left join funds f on f.fund_code = n.fund_code
             {where}
-            group by n.fund_code, f.fund_name
+            group by n.fund_code, f.fund_name, f.fund_type
             order by n.fund_code
         """
         with self._connect() as conn:
@@ -219,11 +224,12 @@ class FundDatabase:
             {
                 "fund_code": code,
                 "fund_name": name,
+                "fund_type": fund_type,
                 "start_date": start,
                 "end_date": end,
                 "row_count": row_count,
             }
-            for code, name, start, end, row_count in rows
+            for code, name, fund_type, start, end, row_count in rows
         ]
 
     def save_pool(self, name: str, codes: list[str]) -> None:
@@ -261,6 +267,7 @@ class FundDatabase:
                 create table if not exists funds (
                     fund_code text primary key,
                     fund_name text not null,
+                    fund_type text not null default '未分类',
                     updated_at text not null
                 );
 
@@ -290,6 +297,7 @@ class FundDatabase:
                 );
                 """
             )
+            self._ensure_column(conn, "funds", "fund_type", "text not null default '未分类'")
             self._ensure_column(conn, "analysis_runs", "reports_dir", "text not null default ''")
             self._ensure_column(conn, "analysis_runs", "processed_dir", "text not null default ''")
 

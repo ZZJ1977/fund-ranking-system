@@ -12,7 +12,7 @@ class StorageTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             db = FundDatabase(Path(tmpdir) / "test.db")
             metadata = pd.DataFrame(
-                [{"fund_code": "000001", "fund_name": "华夏成长混合"}]
+                [{"fund_code": "000001", "fund_name": "华夏成长混合", "fund_type": "混合型"}]
             )
             nav = pd.DataFrame(
                 {"000001": [1.0, 1.1]},
@@ -29,6 +29,7 @@ class StorageTest(unittest.TestCase):
 
             self.assertEqual(loaded_nav.shape, (2, 1))
             self.assertEqual(loaded_metadata.loc[0, "fund_name"], "华夏成长混合")
+            self.assertEqual(loaded_metadata.loc[0, "fund_type"], "混合型")
             self.assertEqual(cached, {"000001"})
             self.assertEqual(db.get_run(run_id)["profile"], "balanced")
             self.assertEqual(db.recent_runs()[0]["profile"], "balanced")

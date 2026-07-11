@@ -38,6 +38,9 @@ It is designed as a small but complete financial data application rather than a 
 | Investor profiles | Supports `aggressive`, `balanced`, and `conservative` weighting schemes |
 | Sensitivity analysis | Compares ranking changes under different risk preferences |
 | Risk labels | Generates risk levels, observation labels, and explanatory reasons |
+| Fund type grouping | Infers broad fund types and adds within-type ranking |
+| Data quality checks | Flags short sample windows, missing rolling windows, and abnormal volatility |
+| Natural-language explanations | Explains ranking results in readable Chinese text |
 | Web dashboard | Search funds, analyze fund pools, view charts, and download reports |
 | SQLite cache | Stores fund metadata, NAV history, custom fund pools, and analysis runs |
 | Independent result pages | Keeps each analysis run in a separate report directory |
@@ -170,6 +173,13 @@ fund-ranking-system
 - `reports/fund_analysis_report.md`
 - `reports/research_enhancement.md`
 - `reports/*.png`
+
+Ranking tables include:
+
+- `fund_type`: inferred broad fund type, such as equity, hybrid, bond, index, money market, or QDII
+- `type_rank`: rank within the same inferred fund type
+- `data_quality`: data coverage and calculation quality warning
+- `result_explanation`: natural-language explanation of each result
 
 ## Test
 

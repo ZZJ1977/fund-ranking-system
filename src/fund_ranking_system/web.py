@@ -587,10 +587,13 @@ def _ranking_table(rows: list[dict[str, object]]) -> str:
         "<tr>"
         f"<td class=\"num\">{row.get('rank', '')}</td>"
         f"<td class=\"fund-cell\">{html.escape(str(row.get('fund', '')))} {html.escape(str(row.get('fund_name', '')))}</td>"
-f"<td class=\"num\">{float(row.get('composite_score', 0)):.2f}</td>"
+        f"<td>{html.escape(str(row.get('fund_type', '未分类')))}</td>"
+        f"<td class=\"num\">{row.get('type_rank', '')}</td>"
+        f"<td class=\"num\">{float(row.get('composite_score', 0)):.2f}</td>"
         f"<td>{html.escape(str(row.get('risk_level', '')))}</td>"
+        f"<td>{html.escape(str(row.get('data_quality', '')))}</td>"
         f"<td>{html.escape(str(row.get('decision_label', '')))}</td>"
-        f"<td class=\"reason-cell\">{html.escape(str(row.get('decision_reason', '')))}</td>"
+        f"<td class=\"reason-cell\">{html.escape(str(row.get('result_explanation', row.get('decision_reason', ''))))}</td>"
         "</tr>"
         for row in rows
     )
@@ -600,7 +603,7 @@ f"<td class=\"num\">{float(row.get('composite_score', 0)):.2f}</td>"
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th class="num">排名</th><th>基金</th><th class="num">综合评分</th><th>风险等级</th><th>标签</th><th>原因</th></tr>
+            <tr><th class="num">排名</th><th>基金</th><th>类型</th><th class="num">同类排名</th><th class="num">综合评分</th><th>风险等级</th><th>数据质量</th><th>标签</th><th>解释</th></tr>
           </thead>
           <tbody>{body}</tbody>
         </table>
@@ -617,6 +620,7 @@ def _search_section(rows: list[dict[str, str]]) -> str:
         "<tr>"
         f"<td class=\"fund-cell\">{html.escape(str(row.get('fund_code', '')))}</td>"
         f"<td>{html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td>{html.escape(str(row.get('fund_type', '未分类')))}</td>"
         "</tr>"
         for row in rows
     )
@@ -625,7 +629,7 @@ def _search_section(rows: list[dict[str, str]]) -> str:
       <h2>基金搜索结果</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>基金代码</th><th>基金名称</th></tr></thead>
+          <thead><tr><th>基金代码</th><th>基金名称</th><th>类型</th></tr></thead>
           <tbody>{body}</tbody>
         </table>
       </div>
@@ -660,6 +664,7 @@ def _data_status_section(rows: list[dict[str, object]]) -> str:
         "<tr>"
         f"<td>{html.escape(str(row['fund_code']))}</td>"
         f"<td>{html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td>{html.escape(str(row.get('fund_type', '未分类')))}</td>"
         f"<td>{html.escape(str(row['start_date']))}</td>"
         f"<td>{html.escape(str(row['end_date']))}</td>"
         f"<td class=\"num\">{row['row_count']}</td>"
@@ -671,7 +676,7 @@ def _data_status_section(rows: list[dict[str, object]]) -> str:
       <h2>本地数据状态</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>基金代码</th><th>基金名称</th><th>最早日期</th><th>最新日期</th><th class="num">数据条数</th></tr></thead>
+          <thead><tr><th>基金代码</th><th>基金名称</th><th>类型</th><th>最早日期</th><th>最新日期</th><th class="num">数据条数</th></tr></thead>
           <tbody>{body}</tbody>
         </table>
       </div>
