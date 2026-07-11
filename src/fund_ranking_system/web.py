@@ -641,29 +641,56 @@ def _download_section(profile: str, run_id: int | None) -> str:
     report_base = f"/runs/{run_id}/reports" if run_id else "/reports"
     processed_base = f"/runs/{run_id}/processed" if run_id else "/processed"
     files = [
-        ("主分析报告", f"{report_base}/fund_analysis_report.md"),
-        ("基金池准入报告", f"{report_base}/fund_universe.md"),
-        ("Walk-Forward 验证报告", f"{report_base}/backtest_summary.md"),
-        ("因子贡献解释", f"{report_base}/factor_contributions.md"),
-        ("LIME 局部解释", f"{report_base}/lime_explanations.md"),
-        ("因子相关性诊断", f"{report_base}/factor_diagnostics.md"),
-        ("权重敏感性报告", f"{report_base}/weight_sensitivity.md"),
-        ("权重扰动稳健性报告", f"{report_base}/weight_robustness.md"),
-        ("研究附录", f"{report_base}/research_enhancement.md"),
-        ("当前画像排名 CSV", f"{report_base}/ranking_{profile}.csv"),
-        ("Walk-Forward 结果 CSV", f"{report_base}/walk_forward_results.csv"),
-        ("因子贡献 CSV", f"{report_base}/factor_contributions.csv"),
-        ("LIME 局部解释 CSV", f"{report_base}/lime_explanations.csv"),
-        ("全部画像排名 CSV", f"{processed_base}/ranking_all_profiles.csv"),
-        ("指标明细 CSV", f"{processed_base}/fund_metrics.csv"),
+        ("主分析报告", f"{report_base}/fund_analysis_report.md", "reports", "fund_analysis_report.md"),
+        ("基金池准入报告", f"{report_base}/fund_universe.md", "reports", "fund_universe.md"),
+        ("Walk-Forward 验证报告", f"{report_base}/backtest_summary.md", "reports", "backtest_summary.md"),
+        ("因子贡献解释", f"{report_base}/factor_contributions.md", "reports", "factor_contributions.md"),
+        ("LIME 局部解释", f"{report_base}/lime_explanations.md", "reports", "lime_explanations.md"),
+        ("因子相关性诊断", f"{report_base}/factor_diagnostics.md", "reports", "factor_diagnostics.md"),
+        ("权重敏感性报告", f"{report_base}/weight_sensitivity.md", "reports", "weight_sensitivity.md"),
+        ("权重扰动稳健性报告", f"{report_base}/weight_robustness.md", "reports", "weight_robustness.md"),
+        ("研究附录", f"{report_base}/research_enhancement.md", "reports", "research_enhancement.md"),
+        ("P3 研究报告", f"{report_base}/p3_research_enhancement.md", "reports", "p3_research_enhancement.md"),
+        ("当前画像排名 CSV", f"{report_base}/ranking_{profile}.csv", "reports", f"ranking_{profile}.csv"),
+        ("Walk-Forward 结果 CSV", f"{report_base}/walk_forward_results.csv", "reports", "walk_forward_results.csv"),
+        ("因子贡献 CSV", f"{report_base}/factor_contributions.csv", "reports", "factor_contributions.csv"),
+        ("LIME 局部解释 CSV", f"{report_base}/lime_explanations.csv", "reports", "lime_explanations.csv"),
+        ("全部画像排名 CSV", f"{processed_base}/ranking_all_profiles.csv", "processed", "ranking_all_profiles.csv"),
+        ("指标明细 CSV", f"{processed_base}/fund_metrics.csv", "processed", "fund_metrics.csv"),
     ]
-    links = "\n".join(f'<a href="{href}" download>{label}</a>' for label, href in files)
+    available_files = _available_downloads(files, run_id)
+    links = "\n".join(f'<a href="{href}" download>{label}</a>' for label, href in available_files)
     return f"""
     <section class="section">
       <h2>下载结果</h2>
       <div class="toolbar">{links}</div>
     </section>
     """
+
+
+def _available_downloads(
+    files: list[tuple[str, str, str, str]],
+    run_id: int | None,
+) -> list[tuple[str, str]]:
+    if run_id is None:
+        return [(label, href) for label, href, _, _ in files]
+
+    run = FundDatabase().get_run(run_id)
+    if run is None:
+        return []
+
+    roots = {
+        "reports": Path(str(run["reports_dir"])),
+        "processed": Path(str(run["processed_dir"])),
+    }
+    available = []
+    seen_labels = set()
+    for label, href, root_name, filename in files:
+        path = roots[root_name] / filename
+        if path.exists() and label not in seen_labels:
+            available.append((label, href))
+            seen_labels.add(label)
+    return available
 
 
 def _data_status_section(rows: list[dict[str, object]]) -> str:

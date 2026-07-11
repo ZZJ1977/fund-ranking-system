@@ -25,6 +25,7 @@ class WebTest(unittest.TestCase):
 
         self.assertIn("基金搜索结果", html)
         self.assertIn("下载结果", html)
+        self.assertIn("LIME 局部解释 CSV", html)
         self.assertIn("<table>", html)
 
 

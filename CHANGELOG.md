@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1 - Download Link Compatibility
+
+- Fixed historical run pages so download buttons only appear when the underlying report files exist.
+- Added compatibility for older `p3_research_enhancement.md` report files.
+
 ## v0.2.0 - LIME Local Explainability
 
 - Added a LIME-style local explanation module for fund-level score sensitivity.

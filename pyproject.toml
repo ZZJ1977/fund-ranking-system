@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fund-ranking-system"
-version = "0.2.0"
+version = "0.2.1"
 description = "Risk-return multi-factor ranking system for mutual funds."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/ZZJ1977/fund-ranking-system/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Version](https://img.shields.io/badge/Version-v0.2.0-176b87)
+![Version](https://img.shields.io/badge/Version-v0.2.1-176b87)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Web%20Dashboard-009688)
 ![AkShare](https://img.shields.io/badge/Data-AkShare-orange)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
