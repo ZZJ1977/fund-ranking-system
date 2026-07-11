@@ -22,6 +22,12 @@
 | 独立结果页 | 每次分析保留独立报告，不被新结果覆盖 |
 | P3 研究增强 | 生成轻量文本因子和可解释模型雏形 |
 
+## 页面预览
+
+![Web UI](docs/assets/web-ui.png)
+
+![Ranking Results](docs/assets/web-results.png)
+
 ## 系统架构
 
 ```text
@@ -326,3 +332,7 @@ Date,Fund_A,Fund_B,Fund_C
 ```bash
 .venv/bin/python -m pytest -q
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
