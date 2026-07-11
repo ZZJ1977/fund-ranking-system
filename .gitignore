@@ -11,6 +11,8 @@ __pycache__/
 *.sqlite3
 *.egg-info/
 src/*.egg-info/
+build/
+dist/
 *.docx
 
 data/raw/**/*.csv

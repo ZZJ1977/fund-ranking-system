@@ -84,6 +84,7 @@ def main() -> None:
     print(f"Main report: {result.report_path}")
     print(f"Walk-forward report: {result.backtest_report_path}")
     print(f"Factor contribution report: {result.factor_contribution_report_path}")
+    print(f"LIME local explanation report: {result.lime_report_path}")
     print(f"Research appendix: {result.research_report_path}")
 
 

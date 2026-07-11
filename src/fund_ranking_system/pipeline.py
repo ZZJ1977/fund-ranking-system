@@ -8,6 +8,7 @@ from .data import generate_demo_nav, load_nav_csv, save_nav_csv
 from .diagnostics import save_factor_diagnostics
 from .explainability import save_explainability_outputs
 from .fund_universe import build_fund_universe, save_universe_outputs
+from .lime_explainability import save_lime_outputs
 from .metadata import attach_fund_metadata, load_fund_metadata
 from .metrics import calculate_metrics
 from .report import build_report, save_report
@@ -40,6 +41,8 @@ class PipelineResult:
     factor_contribution_path: Path
     ranking_explanation_path: Path
     factor_contribution_report_path: Path
+    lime_explanation_path: Path
+    lime_report_path: Path
     robustness_csv_path: Path
     robustness_report_path: Path
     backtest_summary_path: Path
@@ -166,6 +169,12 @@ def run_pipeline(
         reports_dir,
         top_n=top_n,
     )
+    lime_explanation_path, lime_report_path = save_lime_outputs(
+        selected_scored,
+        DEFAULT_PROFILES[profile],
+        reports_dir,
+        top_n=top_n,
+    )
     robustness = monte_carlo_weight_perturbation(
         metrics_for_scoring,
         DEFAULT_PROFILES[profile],
@@ -207,6 +216,8 @@ def run_pipeline(
         factor_contribution_path=factor_contribution_path,
         ranking_explanation_path=ranking_explanation_path,
         factor_contribution_report_path=factor_contribution_report_path,
+        lime_explanation_path=lime_explanation_path,
+        lime_report_path=lime_report_path,
         robustness_csv_path=robustness_csv_path,
         robustness_report_path=robustness_report_path,
         backtest_summary_path=backtest_summary_path,

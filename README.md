@@ -2,6 +2,7 @@
 
 ![CI](https://github.com/ZZJ1977/fund-ranking-system/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Version](https://img.shields.io/badge/Version-v0.2.0-176b87)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Web%20Dashboard-009688)
 ![AkShare](https://img.shields.io/badge/Data-AkShare-orange)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
@@ -9,7 +10,7 @@
 
 A local-first mutual fund risk-return analysis system for China's public fund market. It fetches real NAV data through AkShare, caches it in SQLite, ranks funds with a transparent multi-factor model, and generates charts, CSV files, and Markdown reports.
 
-[中文说明](README.zh-CN.md) · [Local Deployment](docs/local_deployment.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
+[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
 
 > This project is for historical performance analysis and research assistance only. It is not personalized investment advice, a return guarantee, or a buy/sell signal.
 
@@ -20,7 +21,7 @@ A local-first mutual fund risk-return analysis system for China's public fund ma
 - Multi-factor scoring across return, volatility, drawdown, Sharpe, Calmar, and rolling stability.
 - Three investor profiles: `aggressive`, `balanced`, and `conservative`.
 - Explainable rankings with risk labels, data-quality warnings, and natural-language reasons.
-- Walk-forward validation, factor diagnostics, factor contribution analysis, and weight robustness checks.
+- Walk-forward validation, factor diagnostics, factor contribution analysis, LIME-style local explanations, and weight robustness checks.
 - Docker and Windows/macOS/Linux local deployment instructions.
 
 ## Preview
@@ -64,6 +65,7 @@ It is designed as a small but complete financial data application rather than a 
 | Fund universe filter | Applies comparable-universe rules and A/C share-class deduplication |
 | Factor diagnostics | Reports Spearman factor correlations to flag information overlap |
 | Exact score explanation | Decomposes each weighted score into factor contributions |
+| LIME local explanation | Uses local perturbations and a weighted linear surrogate to explain score sensitivity around one fund |
 | Walk-forward validation | Tests whether high-ranked funds show out-of-sample differentiation |
 | Weight robustness | Uses Monte Carlo weight perturbation to measure ranking stability |
 
@@ -240,6 +242,8 @@ fund-ranking-system
 - `reports/fund_universe.md`
 - `reports/factor_diagnostics.md`
 - `reports/factor_contributions.md`
+- `reports/lime_explanations.md`
+- `reports/lime_explanations.csv`
 - `reports/weight_robustness.md`
 - `reports/backtest_summary.md`
 - `reports/walk_forward_results.csv`

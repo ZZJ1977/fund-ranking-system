@@ -3,11 +3,63 @@ name: CI
 on:
   push:
     branches: ["main", "master"]
+    tags: ["v*"]
   pull_request:
     branches: ["main", "master"]
 
 jobs:
+  version:
+    name: Version metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check package version
+        id: version
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import pathlib
+          import tomllib
+
+          root = pathlib.Path.cwd()
+          pyproject_version = tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
+          init_path = root / "src" / "fund_ranking_system" / "__init__.py"
+          spec = importlib.util.spec_from_file_location("fund_ranking_system", init_path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          package_version = module.__version__
+
+          if pyproject_version != package_version:
+              raise SystemExit(
+                  f"Version mismatch: pyproject={pyproject_version}, package={package_version}"
+              )
+
+          version = pyproject_version
+          print(f"version={version}")
+          with open(__import__("os").environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"version={version}\n")
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write(f"## Release Version\n\n`v{version}`\n")
+          PY
+
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          test "${GITHUB_REF_NAME}" = "v${{ steps.version.outputs.version }}"
+
   test:
+    needs: version
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -31,3 +83,53 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+
+  build:
+    name: Build distribution
+    needs: [version, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build package
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fund-ranking-system-v${{ needs.version.outputs.version }}
+          path: dist/*
+
+  release:
+    name: GitHub Release
+    needs: [version, build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fund-ranking-system-v${{ needs.version.outputs.version }}
+          path: dist
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Fund Ranking System v${{ needs.version.outputs.version }}
+          files: dist/*

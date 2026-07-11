@@ -1,6 +1,6 @@
 # 公募基金风险收益评价与量化筛选系统
 
-[English README](README.md) · [贡献指南](CONTRIBUTING.md)
+[English README](README.md) · [更新日志](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md)
 
 本项目是一个基于 Python 的公募基金历史表现分析与决策辅助系统。项目目标不是简单按历史收益率排序，而是搭建一套可复现的基金风险收益评价流程，回答一个更贴近数据分析的问题：
 
@@ -20,7 +20,7 @@
 - 用收益、波动、最大回撤、Sharpe、Calmar 和滚动胜率做多因子评分。
 - 支持激进型、平衡型、稳健型三类投资者画像。
 - 输出风险等级、观察标签、数据质量提示和自然语言解释。
-- 包含 Walk-Forward 样本外验证、因子相关性诊断、因子贡献分解和权重稳健性分析。
+- 包含 Walk-Forward 样本外验证、因子相关性诊断、因子贡献分解、LIME 局部解释和权重稳健性分析。
 
 ## 功能概览
 
@@ -37,6 +37,7 @@
 | 基金池准入 | 按同类可比原则过滤基金，并对 A/C 份额做去重 |
 | 因子诊断 | 输出 Spearman 相关性矩阵，识别指标信息重叠 |
 | 贡献分解 | 对线性加权评分做精确因子贡献解释 |
+| LIME 局部解释 | 用局部扰动和加权线性代理模型解释单只基金附近的评分敏感因子 |
 | 样本外验证 | 通过 Walk-Forward 检验高排名基金后续表现区分能力 |
 | 权重稳健性 | 使用 Monte Carlo 权重扰动计算 TopK 入选频率和 Rank IQR |
 | Web 分析台 | 输入代码即可分析，支持搜索、基金池、下载 |
@@ -245,6 +246,7 @@ Web 页面支持：
 - 显示本地缓存的最早日期、最新日期和数据条数
 - 每次分析生成独立报告目录，历史报告不会被新结果覆盖
 - 自动生成研究报告，包含轻量文本因子和可解释模型说明
+- 自动生成 LIME 局部解释报告，展示单只基金附近的评分敏感因子
 
 ## 本地数据库与自动更新
 
@@ -295,6 +297,8 @@ cd ~/fund-ranking-system
 - `reports/fund_universe.md`：基金池准入报告
 - `reports/factor_diagnostics.md`：因子相关性诊断
 - `reports/factor_contributions.md`：因子贡献解释
+- `reports/lime_explanations.md`：LIME 局部解释报告
+- `reports/lime_explanations.csv`：LIME 局部解释明细
 - `reports/weight_robustness.md`：权重扰动稳健性分析
 - `reports/backtest_summary.md`：Walk-Forward 样本外验证报告
 - `reports/fund_analysis_report.md`：中文项目分析报告
