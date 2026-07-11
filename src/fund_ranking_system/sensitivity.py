@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from .metadata import display_fund
+from .scoring import score_funds
 
 
 def build_sensitivity_table(all_profiles: pd.DataFrame) -> pd.DataFrame:
@@ -70,6 +72,91 @@ def save_sensitivity_outputs(
     sensitivity.to_csv(csv_path)
     markdown_path.write_text(build_sensitivity_markdown(sensitivity, top_n), encoding="utf-8")
     return csv_path, markdown_path
+
+
+def monte_carlo_weight_perturbation(
+    metrics: pd.DataFrame,
+    base_weights: dict[str, float],
+    n_simulations: int = 1000,
+    top_k: int = 10,
+    concentration: float = 120.0,
+    random_state: int = 42,
+) -> pd.DataFrame:
+    """Perturb weights around a base profile and summarize rank robustness."""
+    metrics_order = list(base_weights)
+    base = np.array([base_weights[metric] for metric in metrics_order], dtype=float)
+    base = base / base.sum()
+    rng = np.random.default_rng(random_state)
+    alpha = np.maximum(base * concentration, 0.1)
+    ranks = {fund: [] for fund in metrics.index}
+    selected = {fund: 0 for fund in metrics.index}
+
+    for _ in range(n_simulations):
+        sampled = rng.dirichlet(alpha)
+        weights = dict(zip(metrics_order, sampled, strict=True))
+        scored = score_funds(metrics, weights)
+        for fund, rank in scored["rank"].items():
+            rank_value = int(rank)
+            ranks[fund].append(rank_value)
+            if rank_value <= top_k:
+                selected[fund] += 1
+
+    rows = []
+    for fund, values in ranks.items():
+        series = pd.Series(values)
+        rows.append(
+            {
+                "fund": fund,
+                "fund_name": metrics.loc[fund].get("fund_name", fund),
+                "top_k_frequency": selected[fund] / n_simulations,
+                "median_rank": float(series.median()),
+                "rank_q1": float(series.quantile(0.25)),
+                "rank_q3": float(series.quantile(0.75)),
+                "rank_iqr": float(series.quantile(0.75) - series.quantile(0.25)),
+            }
+        )
+    return pd.DataFrame(rows).set_index("fund").sort_values(
+        ["top_k_frequency", "median_rank"],
+        ascending=[False, True],
+    )
+
+
+def save_monte_carlo_outputs(
+    robustness: pd.DataFrame,
+    csv_path: str | Path,
+    markdown_path: str | Path,
+    top_n: int = 10,
+    top_k: int = 10,
+) -> tuple[Path, Path]:
+    csv_path = Path(csv_path)
+    markdown_path = Path(markdown_path)
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    robustness.to_csv(csv_path)
+    markdown_path.write_text(build_monte_carlo_markdown(robustness, top_n, top_k), encoding="utf-8")
+    return csv_path, markdown_path
+
+
+def build_monte_carlo_markdown(robustness: pd.DataFrame, top_n: int, top_k: int) -> str:
+    rows = [
+        "| 基金 | TopK入选频率 | 排名中位数 | Rank IQR |",
+        "|---|---:|---:|---:|",
+    ]
+    for fund, row in robustness.head(top_n).iterrows():
+        rows.append(
+            f"| {display_fund(str(fund), row)} | {row['top_k_frequency']:.1%} | {row['median_rank']:.0f} | {row['rank_q1']:.0f}-{row['rank_q3']:.0f} |"
+        )
+    return f"""# Monte Carlo 权重扰动稳健性分析
+
+本分析以当前投资者画像权重为中心，随机生成附近权重组合并重复评分，观察基金排名是否稳定。
+
+- `TopK入选频率`：进入 Top {top_k} 的比例。
+- `排名中位数`：多次扰动后的排名中位数。
+- `Rank IQR`：排名四分位区间，区间越窄说明越稳健。
+
+## 稳健性较强的基金
+
+{chr(10).join(rows)}
+"""
 
 
 def _rank_table(frame: pd.DataFrame, rank_columns: list[str]) -> str:

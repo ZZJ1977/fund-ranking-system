@@ -47,7 +47,7 @@ def attach_fund_metadata(metrics: pd.DataFrame, metadata: pd.DataFrame) -> pd.Da
 def display_fund(fund_code: str, row: pd.Series) -> str:
     """Format a fund as 'code name' when metadata is available."""
     fund_name = row.get("fund_name")
-    if pd.isna(fund_name) or not fund_name:
+    if pd.isna(fund_name) or not fund_name or str(fund_name) == str(fund_code):
         return str(fund_code)
     return f"{fund_code} {fund_name}"
 

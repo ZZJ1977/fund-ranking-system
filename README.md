@@ -44,7 +44,11 @@ It is designed as a small but complete financial data application rather than a 
 | Web dashboard | Search funds, analyze fund pools, view charts, and download reports |
 | SQLite cache | Stores fund metadata, NAV history, custom fund pools, and analysis runs |
 | Independent result pages | Keeps each analysis run in a separate report directory |
-| Research report | Adds a lightweight text factor and interpretable model explanation |
+| Fund universe filter | Applies comparable-universe rules and A/C share-class deduplication |
+| Factor diagnostics | Reports Spearman factor correlations to flag information overlap |
+| Exact score explanation | Decomposes each weighted score into factor contributions |
+| Walk-forward validation | Tests whether high-ranked funds show out-of-sample differentiation |
+| Weight robustness | Uses Monte Carlo weight perturbation to measure ranking stability |
 
 ## Quick Start
 
@@ -170,8 +174,13 @@ fund-ranking-system
 - `reports/ranking_<profile>.csv`
 - `reports/weight_sensitivity.csv`
 - `reports/weight_sensitivity.md`
+- `reports/fund_universe.md`
+- `reports/factor_diagnostics.md`
+- `reports/factor_contributions.md`
+- `reports/weight_robustness.md`
+- `reports/backtest_summary.md`
+- `reports/walk_forward_results.csv`
 - `reports/fund_analysis_report.md`
-- `reports/research_enhancement.md`
 - `reports/*.png`
 
 Ranking tables include:
@@ -180,6 +189,20 @@ Ranking tables include:
 - `type_rank`: rank within the same inferred fund type
 - `data_quality`: data coverage and calculation quality warning
 - `result_explanation`: natural-language explanation of each result
+
+## Model Validation
+
+The project includes a walk-forward validation module:
+
+```text
+lookback window
+  -> calculate metrics and score funds
+  -> select Top 10 / Top 20%
+  -> observe the next holding window
+  -> compare with all-fund equal-weight portfolio
+```
+
+This does not claim that the model predicts future returns. It checks whether historical risk-return scores have out-of-sample differentiation ability.
 
 ## Test
 

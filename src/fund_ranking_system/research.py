@@ -20,7 +20,7 @@ TEXT_KEYWORDS = {
 
 
 def build_research_enhancement(scored: pd.DataFrame, reports_dir: str | Path) -> tuple[Path, Path]:
-    """Create a lightweight research report with text factors and model explanation."""
+    """Create a lightweight research appendix with name-keyword examples."""
     reports_dir = Path(reports_dir)
     research = scored.copy()
     if "fund_name" not in research.columns:
@@ -101,19 +101,19 @@ def _research_markdown(explanation: pd.DataFrame) -> str:
         f"| {row.feature} | {row.coefficient:.4f} | {row.abs_importance:.4f} |"
         for row in explanation.itertuples(index=False)
     )
-    return f"""# 研究报告
+    return f"""# 研究附录
 
 ## 定位
 
-本报告不构成真实收益预测模型。`future_score_proxy` 是基于历史指标构造的代理目标，用于演示如何把量化指标、文本因子和可解释模型接入项目。
+本附录不构成真实收益预测模型。`future_score_proxy` 是基于历史指标构造的代理目标，用于演示如何把额外特征接入项目。
 
-## 文本因子
+## 名称关键词示例
 
-系统会从基金名称中提取关键词，例如成长、优势、精选、稳健、消费、债券、新兴、产业、指数，并形成一个轻量文本因子。
+系统会从基金名称中提取关键词，例如成长、优势、精选、稳健、消费、债券、新兴、产业、指数，并形成一个名称关键词示例特征。该特征不等同于基于基金季报或公告文本构建的正式文本因子。
 
 ## 可解释模型
 
-这里使用标准化线性模型近似解释各因子对代理目标的影响。系数绝对值越大，表示该因子在当前样本中的解释权重越高。
+这里使用标准化线性模型近似解释各特征对代理目标的影响。系数绝对值越大，表示该特征在当前样本中的解释权重越高。
 
 | 因子 | 系数 | 绝对重要性 |
 |---|---:|---:|

@@ -22,6 +22,11 @@
 | 基金类型分类 | 根据基金名称推断股票型、混合型、债券型、指数型等大类 |
 | 数据质量提示 | 标记样本期较短、滚动窗口不足、波动率异常等问题 |
 | 结果解释 | 为每只基金生成自然语言解释，说明收益、风险和数据质量特点 |
+| 基金池准入 | 按同类可比原则过滤基金，并对 A/C 份额做去重 |
+| 因子诊断 | 输出 Spearman 相关性矩阵，识别指标信息重叠 |
+| 贡献分解 | 对线性加权评分做精确因子贡献解释 |
+| 样本外验证 | 通过 Walk-Forward 检验高排名基金后续表现区分能力 |
+| 权重稳健性 | 使用 Monte Carlo 权重扰动计算 TopK 入选频率和 Rank IQR |
 | Web 分析台 | 输入代码即可分析，支持搜索、基金池、下载 |
 | SQLite 缓存 | 保存净值、基金名称、基金池和分析历史 |
 | 独立结果页 | 每次分析保留独立报告，不被新结果覆盖 |
@@ -257,6 +262,11 @@ cd ~/fund-ranking-system
 - `reports/ranking_conservative.csv`：稳健型投资者排名
 - `reports/weight_sensitivity.csv`：权重敏感性分析结果
 - `reports/weight_sensitivity.md`：权重敏感性分析摘要
+- `reports/fund_universe.md`：基金池准入报告
+- `reports/factor_diagnostics.md`：因子相关性诊断
+- `reports/factor_contributions.md`：因子贡献解释
+- `reports/weight_robustness.md`：权重扰动稳健性分析
+- `reports/backtest_summary.md`：Walk-Forward 样本外验证报告
 - `reports/fund_analysis_report.md`：中文项目分析报告
 - `reports/*.png`：风险收益散点图、净值走势、回撤曲线和 Top 排名图
 

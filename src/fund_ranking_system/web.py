@@ -642,9 +642,16 @@ def _download_section(profile: str, run_id: int | None) -> str:
     processed_base = f"/runs/{run_id}/processed" if run_id else "/processed"
     files = [
         ("主分析报告", f"{report_base}/fund_analysis_report.md"),
+        ("基金池准入报告", f"{report_base}/fund_universe.md"),
+        ("Walk-Forward 验证报告", f"{report_base}/backtest_summary.md"),
+        ("因子贡献解释", f"{report_base}/factor_contributions.md"),
+        ("因子相关性诊断", f"{report_base}/factor_diagnostics.md"),
         ("权重敏感性报告", f"{report_base}/weight_sensitivity.md"),
-        ("研究报告", f"{report_base}/research_enhancement.md"),
+        ("权重扰动稳健性报告", f"{report_base}/weight_robustness.md"),
+        ("研究附录", f"{report_base}/research_enhancement.md"),
         ("当前画像排名 CSV", f"{report_base}/ranking_{profile}.csv"),
+        ("Walk-Forward 结果 CSV", f"{report_base}/walk_forward_results.csv"),
+        ("因子贡献 CSV", f"{report_base}/factor_contributions.csv"),
         ("全部画像排名 CSV", f"{processed_base}/ranking_all_profiles.csv"),
         ("指标明细 CSV", f"{processed_base}/fund_metrics.csv"),
     ]

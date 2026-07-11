@@ -27,7 +27,7 @@ class ResearchTest(unittest.TestCase):
 
             self.assertTrue(csv_path.exists())
             self.assertTrue(md_path.exists())
-            self.assertIn("研究报告", md_path.read_text(encoding="utf-8"))
+            self.assertIn("研究附录", md_path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

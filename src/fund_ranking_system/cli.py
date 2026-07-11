@@ -82,7 +82,9 @@ def main() -> None:
     print(f"Weight sensitivity: {result.sensitivity_csv_path}")
     print(f"Sensitivity report: {result.sensitivity_report_path}")
     print(f"Main report: {result.report_path}")
-    print(f"Research report: {result.research_report_path}")
+    print(f"Walk-forward report: {result.backtest_report_path}")
+    print(f"Factor contribution report: {result.factor_contribution_report_path}")
+    print(f"Research appendix: {result.research_report_path}")
 
 
 if __name__ == "__main__":

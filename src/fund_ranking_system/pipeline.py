@@ -5,12 +5,21 @@ from pathlib import Path
 
 from .advisory import add_decision_labels
 from .data import generate_demo_nav, load_nav_csv, save_nav_csv
+from .diagnostics import save_factor_diagnostics
+from .explainability import save_explainability_outputs
+from .fund_universe import build_fund_universe, save_universe_outputs
 from .metadata import attach_fund_metadata, load_fund_metadata
 from .metrics import calculate_metrics
 from .report import build_report, save_report
 from .research import build_research_enhancement
 from .scoring import DEFAULT_PROFILES, score_all_profiles, score_funds
-from .sensitivity import build_sensitivity_table, save_sensitivity_outputs
+from .sensitivity import (
+    build_sensitivity_table,
+    monte_carlo_weight_perturbation,
+    save_monte_carlo_outputs,
+    save_sensitivity_outputs,
+)
+from .validation import save_walk_forward_outputs
 from .visualization import plot_drawdown, plot_nav, plot_risk_return, plot_top_scores
 
 
@@ -24,6 +33,19 @@ class PipelineResult:
     report_path: Path
     research_csv_path: Path
     research_report_path: Path
+    universe_csv_path: Path
+    universe_report_path: Path
+    factor_correlation_path: Path
+    factor_diagnostics_path: Path
+    factor_contribution_path: Path
+    ranking_explanation_path: Path
+    factor_contribution_report_path: Path
+    robustness_csv_path: Path
+    robustness_report_path: Path
+    backtest_summary_path: Path
+    backtest_periods_path: Path
+    backtest_report_path: Path
+    backtest_figure_path: Path
     ranking_paths: dict[str, Path]
 
 
@@ -53,10 +75,26 @@ def run_pipeline(
     metrics = calculate_metrics(nav, risk_free_rate=risk_free_rate)
     metadata = load_fund_metadata(metadata_path)
     metrics = attach_fund_metadata(metrics, metadata)
+    universe_metrics, universe_audit = build_fund_universe(metrics, nav)
+    if len(universe_metrics) >= 3:
+        metrics_for_scoring = universe_metrics
+    else:
+        metrics_for_scoring = metrics
+    universe_csv_path, universe_report_path = save_universe_outputs(
+        universe_audit,
+        reports_dir / "fund_universe.csv",
+        reports_dir / "fund_universe.md",
+    )
     metrics_path = processed_dir / "fund_metrics.csv"
-    metrics.to_csv(metrics_path)
+    metrics_for_scoring.to_csv(metrics_path)
 
-    all_profiles = score_all_profiles(metrics)
+    factor_correlation_path, factor_diagnostics_path = save_factor_diagnostics(
+        metrics_for_scoring,
+        reports_dir / "factor_correlation.csv",
+        reports_dir / "factor_diagnostics.md",
+    )
+
+    all_profiles = score_all_profiles(metrics_for_scoring)
     all_profiles_path = processed_dir / "ranking_all_profiles.csv"
     all_profiles.to_csv(all_profiles_path)
 
@@ -71,7 +109,7 @@ def run_pipeline(
     selected_scored = None
     ranking_paths: dict[str, Path] = {}
     for profile_name, weights in DEFAULT_PROFILES.items():
-        scored = score_funds(metrics, weights)
+        scored = score_funds(metrics_for_scoring, weights)
         if "fund_type" in scored.columns:
             scored["type_rank"] = scored.groupby("fund_type")["composite_score"].rank(
                 ascending=False,
@@ -118,6 +156,40 @@ def run_pipeline(
     )
     report_path = save_report(report, reports_dir / "fund_analysis_report.md")
     research_csv_path, research_report_path = build_research_enhancement(selected_scored, reports_dir)
+    (
+        factor_contribution_path,
+        ranking_explanation_path,
+        factor_contribution_report_path,
+    ) = save_explainability_outputs(
+        selected_scored,
+        DEFAULT_PROFILES[profile],
+        reports_dir,
+        top_n=top_n,
+    )
+    robustness = monte_carlo_weight_perturbation(
+        metrics_for_scoring,
+        DEFAULT_PROFILES[profile],
+        top_k=min(top_n, len(metrics_for_scoring)),
+        n_simulations=300,
+    )
+    robustness_csv_path, robustness_report_path = save_monte_carlo_outputs(
+        robustness,
+        reports_dir / "weight_robustness.csv",
+        reports_dir / "weight_robustness.md",
+        top_n=top_n,
+        top_k=min(top_n, len(metrics_for_scoring)),
+    )
+    (
+        backtest_summary_path,
+        backtest_periods_path,
+        backtest_report_path,
+        backtest_figure_path,
+    ) = save_walk_forward_outputs(
+        nav[metrics_for_scoring.index.intersection(nav.columns)],
+        DEFAULT_PROFILES[profile],
+        reports_dir,
+        top_n=top_n,
+    )
 
     return PipelineResult(
         data_source=Path(data_source),
@@ -128,5 +200,18 @@ def run_pipeline(
         report_path=report_path,
         research_csv_path=research_csv_path,
         research_report_path=research_report_path,
+        universe_csv_path=universe_csv_path,
+        universe_report_path=universe_report_path,
+        factor_correlation_path=factor_correlation_path,
+        factor_diagnostics_path=factor_diagnostics_path,
+        factor_contribution_path=factor_contribution_path,
+        ranking_explanation_path=ranking_explanation_path,
+        factor_contribution_report_path=factor_contribution_report_path,
+        robustness_csv_path=robustness_csv_path,
+        robustness_report_path=robustness_report_path,
+        backtest_summary_path=backtest_summary_path,
+        backtest_periods_path=backtest_periods_path,
+        backtest_report_path=backtest_report_path,
+        backtest_figure_path=backtest_figure_path,
         ranking_paths=ranking_paths,
     )
