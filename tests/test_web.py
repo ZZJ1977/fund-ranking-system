@@ -18,6 +18,8 @@ class WebTest(unittest.TestCase):
     def test_page_renders_search_and_download_sections(self):
         html = _page(
             rows=[{"fund": "000011", "fund_name": "华夏大盘精选混合A", "rank": 1, "composite_score": 80}],
+            ml_rows=[{"fund": "000011", "fund_name": "华夏大盘精选混合A", "ml_rank": 1, "ml_score": 82}],
+            comparison_rows=[{"fund": "000011", "fund_name": "华夏大盘精选混合A", "original_rank": 1, "ml_rank": 1, "rank_change": 0, "original_score": 80, "ml_score": 82}],
             search_rows=[{"fund_code": "000011", "fund_name": "华夏大盘精选混合A"}],
             report_text="# 报告\n\n| 排名 | 基金 |\n|---:|---|\n| 1 | 000011 |",
             success=True,
@@ -25,7 +27,13 @@ class WebTest(unittest.TestCase):
 
         self.assertIn("基金搜索结果", html)
         self.assertIn("下载结果", html)
+        self.assertIn("Word 综合报告", html)
+        self.assertIn("PDF 综合报告", html)
+        self.assertIn("Excel 数据汇总", html)
         self.assertIn("LIME 局部解释 CSV", html)
+        self.assertIn("ML 辅助评分报告", html)
+        self.assertIn("ML 辅助排名", html)
+        self.assertIn("原始排名 vs ML 排名", html)
         self.assertIn("<table>", html)
 
 

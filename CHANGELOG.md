@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.0 - ML-Assisted Scoring
+
+- Added walk-forward training sample generation for machine-learning assisted factor learning.
+- Added non-negative ridge-based factor weight learning with profile-weight blending and safe fallbacks.
+- Added ML ranking, learned weight CSV, training sample CSV, and ML model report outputs.
+- Added original-vs-ML ranking comparison outputs and on-page ML result tables.
+- Added Word, PDF, and Excel export bundles for easier user-facing downloads.
+- Exposed ML-assisted scoring downloads in the FastAPI web dashboard.
+
 ## v0.2.1 - Download Link Compatibility
 
 - Fixed historical run pages so download buttons only appear when the underlying report files exist.

@@ -7,10 +7,12 @@ from .advisory import add_decision_labels
 from .data import generate_demo_nav, load_nav_csv, save_nav_csv
 from .diagnostics import save_factor_diagnostics
 from .explainability import save_explainability_outputs
+from .friendly_exports import save_friendly_exports
 from .fund_universe import build_fund_universe, save_universe_outputs
 from .lime_explainability import save_lime_outputs
 from .metadata import attach_fund_metadata, load_fund_metadata
 from .metrics import calculate_metrics
+from .ml_scoring import save_ml_outputs
 from .report import build_report, save_report
 from .research import build_research_enhancement
 from .scoring import DEFAULT_PROFILES, score_all_profiles, score_funds
@@ -43,6 +45,15 @@ class PipelineResult:
     factor_contribution_report_path: Path
     lime_explanation_path: Path
     lime_report_path: Path
+    ml_training_samples_path: Path
+    ml_weights_path: Path
+    ml_ranking_path: Path
+    ml_report_path: Path
+    ml_comparison_path: Path
+    ml_comparison_report_path: Path
+    word_report_path: Path
+    pdf_report_path: Path
+    excel_workbook_path: Path
     robustness_csv_path: Path
     robustness_report_path: Path
     backtest_summary_path: Path
@@ -175,6 +186,23 @@ def run_pipeline(
         reports_dir,
         top_n=top_n,
     )
+    (
+        ml_training_samples_path,
+        ml_weights_path,
+        ml_ranking_path,
+        ml_report_path,
+        ml_comparison_path,
+        ml_comparison_report_path,
+    ) = save_ml_outputs(
+        nav[metrics_for_scoring.index.intersection(nav.columns)],
+        metrics_for_scoring,
+        DEFAULT_PROFILES[profile],
+        reports_dir,
+        profile=profile,
+        top_n=top_n,
+        risk_free_rate=risk_free_rate,
+        base_scored=selected_scored,
+    )
     robustness = monte_carlo_weight_perturbation(
         metrics_for_scoring,
         DEFAULT_PROFILES[profile],
@@ -199,6 +227,11 @@ def run_pipeline(
         reports_dir,
         top_n=top_n,
     )
+    word_report_path, pdf_report_path, excel_workbook_path = save_friendly_exports(
+        reports_dir,
+        processed_dir,
+        profile,
+    )
 
     return PipelineResult(
         data_source=Path(data_source),
@@ -218,6 +251,15 @@ def run_pipeline(
         factor_contribution_report_path=factor_contribution_report_path,
         lime_explanation_path=lime_explanation_path,
         lime_report_path=lime_report_path,
+        ml_training_samples_path=ml_training_samples_path,
+        ml_weights_path=ml_weights_path,
+        ml_ranking_path=ml_ranking_path,
+        ml_report_path=ml_report_path,
+        ml_comparison_path=ml_comparison_path,
+        ml_comparison_report_path=ml_comparison_report_path,
+        word_report_path=word_report_path,
+        pdf_report_path=pdf_report_path,
+        excel_workbook_path=excel_workbook_path,
         robustness_csv_path=robustness_csv_path,
         robustness_report_path=robustness_report_path,
         backtest_summary_path=backtest_summary_path,

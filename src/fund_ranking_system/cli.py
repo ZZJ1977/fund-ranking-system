@@ -85,6 +85,10 @@ def main() -> None:
     print(f"Walk-forward report: {result.backtest_report_path}")
     print(f"Factor contribution report: {result.factor_contribution_report_path}")
     print(f"LIME local explanation report: {result.lime_report_path}")
+    print(f"ML-assisted scoring report: {result.ml_report_path}")
+    print(f"Word report bundle: {result.word_report_path}")
+    print(f"PDF report bundle: {result.pdf_report_path}")
+    print(f"Excel data workbook: {result.excel_workbook_path}")
     print(f"Research appendix: {result.research_report_path}")
 
 

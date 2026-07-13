@@ -113,6 +113,8 @@ def analyze(
 
     ranking = pd.read_csv(result.ranking_paths[profile]).head(top_n)
     rows = ranking.to_dict(orient="records")
+    ml_rows = pd.read_csv(result.ml_ranking_path).head(top_n).to_dict(orient="records")
+    comparison_rows = pd.read_csv(result.ml_comparison_path).head(top_n).to_dict(orient="records")
     report_text = result.report_path.read_text(encoding="utf-8")
     return _page(
         codes=" ".join(normalized_codes),
@@ -122,6 +124,8 @@ def analyze(
         fund_pool=fund_pool,
         keyword=keyword,
         rows=rows,
+        ml_rows=ml_rows,
+        comparison_rows=comparison_rows,
         search_rows=search_rows,
         report_text=report_text,
         cache_message=cache_message,
@@ -178,12 +182,18 @@ def run_detail(run_id: int) -> str:
     report_text = report_path.read_text(encoding="utf-8") if report_path.exists() else "报告文件不存在。"
     ranking_path = Path(str(run["reports_dir"])) / f"ranking_{run['profile']}.csv"
     rows = pd.read_csv(ranking_path).head(int(run["top_n"])).to_dict(orient="records") if ranking_path.exists() else []
+    ml_path = Path(str(run["reports_dir"])) / f"ranking_ml_{run['profile']}.csv"
+    ml_rows = pd.read_csv(ml_path).head(int(run["top_n"])).to_dict(orient="records") if ml_path.exists() else []
+    comparison_path = Path(str(run["reports_dir"])) / f"ranking_comparison_{run['profile']}.csv"
+    comparison_rows = pd.read_csv(comparison_path).head(int(run["top_n"])).to_dict(orient="records") if comparison_path.exists() else []
     return _page(
         codes=" ".join(run["codes"]),
         start_date=str(run["start_date"]),
         profile=str(run["profile"]),
         top_n=int(run["top_n"]),
         rows=rows,
+        ml_rows=ml_rows,
+        comparison_rows=comparison_rows,
         report_text=report_text,
         run_id=run_id,
         data_stats=FundDatabase().nav_stats(run["codes"]),
@@ -302,6 +312,8 @@ def _page(
     fund_pool: str = "custom",
     keyword: str = "",
     rows: list[dict[str, object]] | None = None,
+    ml_rows: list[dict[str, object]] | None = None,
+    comparison_rows: list[dict[str, object]] | None = None,
     search_rows: list[dict[str, str]] | None = None,
     report_text: str = "",
     cache_message: str = "",
@@ -324,6 +336,8 @@ def _page(
         for pool in saved_pools
     )
     table = _ranking_table(rows or [])
+    ml_table = _ml_ranking_table(ml_rows or [])
+    comparison_table = _ranking_comparison_table(comparison_rows or [])
     search_section = _search_section(search_rows or [])
     history = _history_section(FundDatabase().recent_runs())
     data_status = _data_status_section(data_stats or [])
@@ -560,6 +574,8 @@ def _page(
     {pool_manager}
     {data_status}
     {table}
+    {ml_table}
+    {comparison_table}
     {downloads}
     {figures}
     {_report_section(report_text)}
@@ -637,15 +653,78 @@ def _search_section(rows: list[dict[str, str]]) -> str:
     """
 
 
+def _ml_ranking_table(rows: list[dict[str, object]]) -> str:
+    if not rows:
+        return ""
+
+    body = "\n".join(
+        "<tr>"
+        f"<td class=\"num\">{row.get('ml_rank', '')}</td>"
+        f"<td class=\"fund-cell\">{html.escape(str(row.get('fund', '')))} {html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td class=\"num\">{float(row.get('ml_score', 0)):.2f}</td>"
+        f"<td class=\"num\">{float(row.get('annual_return', 0)):.2%}</td>"
+        f"<td class=\"num\">{float(row.get('max_drawdown', 0)):.2%}</td>"
+        f"<td class=\"num\">{float(row.get('sharpe', 0)):.3f}</td>"
+        f"<td>{html.escape(str(row.get('ml_model_status', '')))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    return f"""
+    <section class="section">
+      <h2>ML 辅助排名</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="num">ML排名</th><th>基金</th><th class="num">ML评分</th><th class="num">年化收益</th><th class="num">最大回撤</th><th class="num">Sharpe</th><th>模型状态</th></tr></thead>
+          <tbody>{body}</tbody>
+        </table>
+      </div>
+    </section>
+    """
+
+
+def _ranking_comparison_table(rows: list[dict[str, object]]) -> str:
+    if not rows:
+        return ""
+
+    body = "\n".join(
+        "<tr>"
+        f"<td class=\"fund-cell\">{html.escape(str(row.get('fund', '')))} {html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td class=\"num\">{row.get('original_rank', '')}</td>"
+        f"<td class=\"num\">{row.get('ml_rank', '')}</td>"
+        f"<td class=\"num\">{int(row.get('rank_change', 0)):+d}</td>"
+        f"<td class=\"num\">{float(row.get('original_score', 0)):.2f}</td>"
+        f"<td class=\"num\">{float(row.get('ml_score', 0)):.2f}</td>"
+        f"<td class=\"reason-cell\">{html.escape(str(row.get('comparison_reason', '')))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    return f"""
+    <section class="section">
+      <h2>原始排名 vs ML 排名</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>基金</th><th class="num">原始排名</th><th class="num">ML排名</th><th class="num">排名变化</th><th class="num">原始评分</th><th class="num">ML评分</th><th>说明</th></tr></thead>
+          <tbody>{body}</tbody>
+        </table>
+      </div>
+    </section>
+    """
+
+
 def _download_section(profile: str, run_id: int | None) -> str:
     report_base = f"/runs/{run_id}/reports" if run_id else "/reports"
     processed_base = f"/runs/{run_id}/processed" if run_id else "/processed"
     files = [
+        ("Word 综合报告", f"{report_base}/analysis_reports.docx", "reports", "analysis_reports.docx"),
+        ("PDF 综合报告", f"{report_base}/analysis_reports.pdf", "reports", "analysis_reports.pdf"),
+        ("Excel 数据汇总", f"{report_base}/analysis_data.xlsx", "reports", "analysis_data.xlsx"),
         ("主分析报告", f"{report_base}/fund_analysis_report.md", "reports", "fund_analysis_report.md"),
         ("基金池准入报告", f"{report_base}/fund_universe.md", "reports", "fund_universe.md"),
         ("Walk-Forward 验证报告", f"{report_base}/backtest_summary.md", "reports", "backtest_summary.md"),
         ("因子贡献解释", f"{report_base}/factor_contributions.md", "reports", "factor_contributions.md"),
         ("LIME 局部解释", f"{report_base}/lime_explanations.md", "reports", "lime_explanations.md"),
+        ("ML 辅助评分报告", f"{report_base}/ml_model_report.md", "reports", "ml_model_report.md"),
+        ("原始/ML 排名对比", f"{report_base}/ranking_comparison.md", "reports", "ranking_comparison.md"),
         ("因子相关性诊断", f"{report_base}/factor_diagnostics.md", "reports", "factor_diagnostics.md"),
         ("权重敏感性报告", f"{report_base}/weight_sensitivity.md", "reports", "weight_sensitivity.md"),
         ("权重扰动稳健性报告", f"{report_base}/weight_robustness.md", "reports", "weight_robustness.md"),
@@ -655,6 +734,10 @@ def _download_section(profile: str, run_id: int | None) -> str:
         ("Walk-Forward 结果 CSV", f"{report_base}/walk_forward_results.csv", "reports", "walk_forward_results.csv"),
         ("因子贡献 CSV", f"{report_base}/factor_contributions.csv", "reports", "factor_contributions.csv"),
         ("LIME 局部解释 CSV", f"{report_base}/lime_explanations.csv", "reports", "lime_explanations.csv"),
+        ("ML 学习权重 CSV", f"{report_base}/ml_learned_weights.csv", "reports", "ml_learned_weights.csv"),
+        ("ML 辅助排名 CSV", f"{report_base}/ranking_ml_{profile}.csv", "reports", f"ranking_ml_{profile}.csv"),
+        ("原始/ML 排名对比 CSV", f"{report_base}/ranking_comparison_{profile}.csv", "reports", f"ranking_comparison_{profile}.csv"),
+        ("ML 训练样本 CSV", f"{report_base}/ml_training_samples.csv", "reports", "ml_training_samples.csv"),
         ("全部画像排名 CSV", f"{processed_base}/ranking_all_profiles.csv", "processed", "ranking_all_profiles.csv"),
         ("指标明细 CSV", f"{processed_base}/fund_metrics.csv", "processed", "fund_metrics.csv"),
     ]

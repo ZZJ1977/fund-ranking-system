@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fund-ranking-system"
-version = "0.2.1"
+version = "0.3.0"
 description = "Risk-return multi-factor ranking system for mutual funds."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,6 +17,9 @@ dependencies = [
     "uvicorn>=0.30",
     "jinja2>=3.1",
     "python-multipart>=0.0.9",
+    "python-docx>=1.1",
+    "reportlab>=4.0",
+    "openpyxl>=3.1",
 ]
 
 [project.scripts]

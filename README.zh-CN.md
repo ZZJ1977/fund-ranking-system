@@ -20,7 +20,7 @@
 - 用收益、波动、最大回撤、Sharpe、Calmar 和滚动胜率做多因子评分。
 - 支持激进型、平衡型、稳健型三类投资者画像。
 - 输出风险等级、观察标签、数据质量提示和自然语言解释。
-- 包含 Walk-Forward 样本外验证、因子相关性诊断、因子贡献分解、LIME 局部解释和权重稳健性分析。
+- 包含 Walk-Forward 样本外验证、机器学习辅助评分、因子相关性诊断、因子贡献分解、LIME 局部解释、Office/PDF 导出和权重稳健性分析。
 
 ## 功能概览
 
@@ -38,6 +38,8 @@
 | 因子诊断 | 输出 Spearman 相关性矩阵，识别指标信息重叠 |
 | 贡献分解 | 对线性加权评分做精确因子贡献解释 |
 | LIME 局部解释 | 用局部扰动和加权线性代理模型解释单只基金附近的评分敏感因子 |
+| 机器学习辅助评分 | 用 Walk-Forward 历史样本学习因子权重，并生成 ML 对照排名 |
+| 友好格式导出 | 生成 Word 综合报告、PDF 综合报告和 Excel 数据汇总 |
 | 样本外验证 | 通过 Walk-Forward 检验高排名基金后续表现区分能力 |
 | 权重稳健性 | 使用 Monte Carlo 权重扰动计算 TopK 入选频率和 Rank IQR |
 | Web 分析台 | 输入代码即可分析，支持搜索、基金池、下载 |
@@ -299,9 +301,18 @@ cd ~/fund-ranking-system
 - `reports/factor_contributions.md`：因子贡献解释
 - `reports/lime_explanations.md`：LIME 局部解释报告
 - `reports/lime_explanations.csv`：LIME 局部解释明细
+- `reports/ml_model_report.md`：机器学习辅助评分报告
+- `reports/ml_learned_weights.csv`：机器学习学习权重
+- `reports/ranking_ml_<profile>.csv`：机器学习辅助排名
+- `reports/ml_training_samples.csv`：机器学习训练样本
+- `reports/ranking_comparison_<profile>.csv`：原始排名与 ML 排名对比
+- `reports/ranking_comparison.md`：原始排名与 ML 排名对比报告
 - `reports/weight_robustness.md`：权重扰动稳健性分析
 - `reports/backtest_summary.md`：Walk-Forward 样本外验证报告
 - `reports/fund_analysis_report.md`：中文项目分析报告
+- `reports/analysis_reports.docx`：Word 综合报告
+- `reports/analysis_reports.pdf`：PDF 综合报告
+- `reports/analysis_data.xlsx`：Excel 数据汇总
 - `reports/*.png`：风险收益散点图、净值走势、回撤曲线和 Top 排名图
 
 排名表中还会输出：

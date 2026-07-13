@@ -65,6 +65,8 @@ Web 展示 / CSV 下载 / Markdown 报告
 | `diagnostics.py` | 因子相关性诊断 |
 | `explainability.py` | 评分因子贡献分解 |
 | `lime_explainability.py` | LIME 局部近似解释 |
+| `ml_scoring.py` | 机器学习辅助权重学习和对照排名 |
+| `friendly_exports.py` | Word、PDF 和 Excel 友好格式导出 |
 | `validation.py` | Walk-Forward 样本外验证 |
 | `research.py` | 研究附录生成 |
 
@@ -138,12 +140,14 @@ Web 分析台支持：
 
 ## 8. 模型验证与诊断
 
-系统新增五类研究型输出：
+系统新增六类研究型输出：
 
 - 基金池准入：按主动权益类可比原则进行筛选，并对 A/C 份额做代表份额保留。
 - 因子相关性诊断：用 Spearman 相关系数识别 Sharpe、Calmar、收益率等指标之间的信息重叠。
 - 因子贡献分解：由于评分模型是线性加权模型，可以直接计算每个因子对综合评分的精确贡献。
 - LIME 局部解释：在单只基金附近生成扰动样本，并用加权线性代理模型解释局部评分敏感因子。
+- 机器学习辅助评分：使用历史滚动窗口训练样本学习因子权重，并生成 ML 对照排名。
+- 友好格式导出：将 Markdown 报告汇总为 Word/PDF，并将 CSV 明细汇总为 Excel 工作簿。
 - Walk-Forward 样本外验证：使用滚动历史窗口评分，并观察后续持有期 Top 组合表现。
 
 Walk-Forward 的结论边界是：它不证明模型可以预测未来收益，只检验历史评价指标是否对后续表现具有一定区分能力。

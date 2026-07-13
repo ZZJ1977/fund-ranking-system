@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/ZZJ1977/fund-ranking-system/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Version](https://img.shields.io/badge/Version-v0.2.1-176b87)
+![Version](https://img.shields.io/badge/Version-v0.3.0-176b87)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Web%20Dashboard-009688)
 ![AkShare](https://img.shields.io/badge/Data-AkShare-orange)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
@@ -21,7 +21,7 @@ A local-first mutual fund risk-return analysis system for China's public fund ma
 - Multi-factor scoring across return, volatility, drawdown, Sharpe, Calmar, and rolling stability.
 - Three investor profiles: `aggressive`, `balanced`, and `conservative`.
 - Explainable rankings with risk labels, data-quality warnings, and natural-language reasons.
-- Walk-forward validation, factor diagnostics, factor contribution analysis, LIME-style local explanations, and weight robustness checks.
+- Walk-forward validation, ML-assisted scoring, factor diagnostics, factor contribution analysis, LIME-style local explanations, Office/PDF exports, and weight robustness checks.
 - Docker and Windows/macOS/Linux local deployment instructions.
 
 ## Preview
@@ -66,6 +66,8 @@ It is designed as a small but complete financial data application rather than a 
 | Factor diagnostics | Reports Spearman factor correlations to flag information overlap |
 | Exact score explanation | Decomposes each weighted score into factor contributions |
 | LIME local explanation | Uses local perturbations and a weighted linear surrogate to explain score sensitivity around one fund |
+| ML-assisted scoring | Learns factor weights from walk-forward samples and produces an ML comparison ranking |
+| User-friendly exports | Exports a Word report bundle, PDF report bundle, and Excel data workbook |
 | Walk-forward validation | Tests whether high-ranked funds show out-of-sample differentiation |
 | Weight robustness | Uses Monte Carlo weight perturbation to measure ranking stability |
 
@@ -244,10 +246,19 @@ fund-ranking-system
 - `reports/factor_contributions.md`
 - `reports/lime_explanations.md`
 - `reports/lime_explanations.csv`
+- `reports/ml_model_report.md`
+- `reports/ml_learned_weights.csv`
+- `reports/ranking_ml_<profile>.csv`
+- `reports/ml_training_samples.csv`
+- `reports/ranking_comparison_<profile>.csv`
+- `reports/ranking_comparison.md`
 - `reports/weight_robustness.md`
 - `reports/backtest_summary.md`
 - `reports/walk_forward_results.csv`
 - `reports/fund_analysis_report.md`
+- `reports/analysis_reports.docx`
+- `reports/analysis_reports.pdf`
+- `reports/analysis_data.xlsx`
 - `reports/*.png`
 
 Ranking tables include:
