@@ -965,30 +965,31 @@ def _page(
       border: 1px solid var(--line);
       border-radius: 8px;
     }}
-	    .constraint-panel {{
+	    .advanced-panel {{
       grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(5, minmax(140px, 1fr));
-      gap: 12px;
-      padding: 12px;
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #fbfcfd;
+      overflow: hidden;
+    }}
+    .advanced-panel summary {{
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 700;
+      color: var(--text);
+      list-style-position: inside;
+    }}
+    .advanced-panel .panel-grid {{
+      display: grid;
+      gap: 12px;
+      padding: 0 12px 12px;
+    }}
+	    .constraint-panel .panel-grid {{
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
 	    }}
-	    .weight-panel {{
-	      grid-column: 1 / -1;
+	    .weight-panel .panel-grid {{
 	      display: grid;
 	      grid-template-columns: repeat(4, minmax(140px, 1fr));
-	      gap: 12px;
-	      padding: 12px;
-	      border: 1px solid var(--line);
-	      border-radius: 8px;
-	      background: #fff;
-	    }}
-	    .weight-panel legend {{
-	      padding: 0 6px;
-	      color: var(--text);
-	      font-weight: 700;
 	    }}
 	    .checkline {{
 	      display: flex;
@@ -1004,11 +1005,6 @@ def _page(
 	      gap: 10px;
 	      align-items: end;
 	    }}
-    .constraint-panel legend {{
-      padding: 0 6px;
-      color: var(--text);
-      font-weight: 700;
-    }}
     label {{ display: grid; gap: 6px; font-size: 15px; color: var(--muted); }}
     input, select {{
       height: 44px;
@@ -1291,8 +1287,8 @@ def _page(
 	    @media (max-width: 900px) {{
 	      header, main {{ padding-left: 16px; padding-right: 16px; }}
 	      form {{ grid-template-columns: 1fr; }}
-	      .constraint-panel {{ grid-template-columns: 1fr; }}
-	      .weight-panel {{ grid-template-columns: 1fr; }}
+	      .constraint-panel .panel-grid {{ grid-template-columns: 1fr; }}
+	      .weight-panel .panel-grid {{ grid-template-columns: 1fr; }}
 	      .preset-actions {{ grid-template-columns: 1fr; }}
 	      .chart-viewer {{ grid-template-columns: 1fr; }}
 	      .chart-picker {{ grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; padding-right: 0; }}
@@ -1326,53 +1322,57 @@ def _page(
 	      <label>分析方案
 	        <select name="preset" id="preset-select">{preset_options}</select>
 	      </label>
-	      <fieldset class="weight-panel">
-	        <legend>评分权重</legend>
-	        <label class="checkline"><input type="checkbox" name="use_custom_weights" value="1" {custom_checked}>使用自定义评分权重</label>
-	        {factor_controls}
-	        <div class="preset-actions">
-	          <label>保存方案名称
-	            <input name="preset_name" value="{html.escape(preset)}" placeholder="例如：低回撤观察方案">
-	          </label>
-	          <button type="submit" class="secondary" formaction="/presets/save" formmethod="post">保存方案</button>
+	      <details class="advanced-panel weight-panel">
+	        <summary>评分权重</summary>
+	        <div class="panel-grid">
+	          <label class="checkline"><input type="checkbox" name="use_custom_weights" value="1" {custom_checked}>使用自定义评分权重</label>
+	          {factor_controls}
+	          <div class="preset-actions">
+	            <label>保存方案名称
+	              <input name="preset_name" value="{html.escape(preset)}" placeholder="例如：低回撤观察方案">
+	            </label>
+	            <button type="submit" class="secondary" formaction="/presets/save" formmethod="post">保存方案</button>
+	          </div>
 	        </div>
-	      </fieldset>
-	      <fieldset class="constraint-panel">
-        <legend>组合约束</legend>
-        <label>组合目标
-          <select name="portfolio_objective">{portfolio_objective_options}</select>
-        </label>
-        <label>最少持仓
-          <input name="portfolio_min_funds" type="number" min="1" max="50" value="{portfolio_constraints.min_funds}">
-        </label>
-        <label>最多持仓
-          <input name="portfolio_max_funds" type="number" min="1" max="80" value="{portfolio_constraints.max_funds}">
-        </label>
-        <label>单只上限
-          <input name="max_position_weight" type="number" min="0.05" max="1" step="0.01" value="{portfolio_constraints.max_position_weight:.2f}">
-        </label>
-        <label>同类占比上限
-          <input name="max_type_weight" type="number" min="0.10" max="1" step="0.01" value="{portfolio_constraints.max_type_weight:.2f}">
-        </label>
-        <label>最高相关阈值
-          <input name="max_pair_correlation" type="number" min="0" max="1" step="0.01" value="{portfolio_constraints.max_pair_correlation:.2f}">
-        </label>
-        <label>回撤下限
-          <input name="portfolio_max_drawdown" type="number" min="-0.95" max="0" step="0.01" value="{portfolio_constraints.max_drawdown_floor:.2f}">
-        </label>
-        <label>最低 Sharpe
-          <input name="portfolio_min_sharpe" type="number" min="-5" max="10" step="0.01" value="{portfolio_constraints.min_sharpe:.2f}">
-        </label>
-        <label>再平衡天数
-          <input name="rebalance_days" type="number" min="21" max="252" step="21" value="{portfolio_constraints.rebalance_days}">
-        </label>
-        <label>最大换手率
-          <input name="max_turnover" type="number" min="0" max="1" step="0.01" value="{portfolio_constraints.max_turnover:.2f}">
-        </label>
-        <label>交易成本 bps
-          <input name="transaction_cost_bps" type="number" min="0" max="500" step="1" value="{portfolio_constraints.transaction_cost_bps:.0f}">
-        </label>
-      </fieldset>
+	      </details>
+	      <details class="advanced-panel constraint-panel">
+        <summary>组合约束</summary>
+        <div class="panel-grid">
+          <label>组合目标
+            <select name="portfolio_objective">{portfolio_objective_options}</select>
+          </label>
+          <label>最少持仓
+            <input name="portfolio_min_funds" type="number" min="1" max="50" value="{portfolio_constraints.min_funds}">
+          </label>
+          <label>最多持仓
+            <input name="portfolio_max_funds" type="number" min="1" max="80" value="{portfolio_constraints.max_funds}">
+          </label>
+          <label>单只上限
+            <input name="max_position_weight" type="number" min="0.05" max="1" step="0.01" value="{portfolio_constraints.max_position_weight:.2f}">
+          </label>
+          <label>同类占比上限
+            <input name="max_type_weight" type="number" min="0.10" max="1" step="0.01" value="{portfolio_constraints.max_type_weight:.2f}">
+          </label>
+          <label>最高相关阈值
+            <input name="max_pair_correlation" type="number" min="0" max="1" step="0.01" value="{portfolio_constraints.max_pair_correlation:.2f}">
+          </label>
+          <label>回撤下限
+            <input name="portfolio_max_drawdown" type="number" min="-0.95" max="0" step="0.01" value="{portfolio_constraints.max_drawdown_floor:.2f}">
+          </label>
+          <label>最低 Sharpe
+            <input name="portfolio_min_sharpe" type="number" min="-5" max="10" step="0.01" value="{portfolio_constraints.min_sharpe:.2f}">
+          </label>
+          <label>再平衡天数
+            <input name="rebalance_days" type="number" min="21" max="252" step="21" value="{portfolio_constraints.rebalance_days}">
+          </label>
+          <label>最大换手率
+            <input name="max_turnover" type="number" min="0" max="1" step="0.01" value="{portfolio_constraints.max_turnover:.2f}">
+          </label>
+          <label>交易成本 bps
+            <input name="transaction_cost_bps" type="number" min="0" max="500" step="1" value="{portfolio_constraints.transaction_cost_bps:.0f}">
+          </label>
+        </div>
+      </details>
       <button type="submit">开始分析</button>
     </form>
     <form method="get" action="/search" style="margin-top: 12px; grid-template-columns: minmax(280px, 1fr) auto;">

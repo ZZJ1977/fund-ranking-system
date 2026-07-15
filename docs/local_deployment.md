@@ -2,6 +2,8 @@
 
 本文档面向从 GitHub clone 项目后，希望在自己电脑本地运行 Web 分析台的用户。
 
+最近一次本地测试记录见：[部署核查清单](deployment_checklist.md)。
+
 ## 1. 环境要求
 
 - Python 3.10 或更高版本

@@ -10,7 +10,7 @@
 
 A local-first mutual fund risk-return research workstation for China's public fund market. It fetches real NAV data through AkShare, caches it in SQLite, ranks funds with transparent multi-factor and ML-assisted models, checks data quality and model effectiveness, compares strategies against benchmarks, and exports Word/PDF/Excel reports.
 
-[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
+[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Deployment Checklist](docs/deployment_checklist.md) · [Sample Outputs](docs/sample_outputs/README.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
 
 > This project is for historical performance analysis and research assistance only. It is not personalized investment advice, a return guarantee, or a buy/sell signal.
 
@@ -32,6 +32,8 @@ A local-first mutual fund risk-return research workstation for China's public fu
 
 ![Ranking Results](docs/assets/web-results.png)
 
+![Chart Viewer](docs/assets/chart-viewer.png)
+
 ## Why This Project
 
 Mutual fund screening is often reduced to historical return ranking. This project extends that workflow into a reproducible risk-return analysis pipeline:
@@ -42,10 +44,22 @@ Fund NAV data
   -> return calculation
   -> risk-return metrics
   -> multi-factor scoring
-  -> ranking, charts, reports
+  -> ranking, chart viewer, Office/PDF reports
 ```
 
 It is designed as a small but complete financial data application rather than a single notebook.
+
+## Product Workflow
+
+```text
+Choose fund codes or a saved pool
+  -> run data quality and model checks
+  -> compare base, adaptive, ML, and portfolio results
+  -> inspect one large chart at a time
+  -> export Word, PDF, and Excel outputs
+```
+
+The main form keeps advanced scoring weights and portfolio constraints collapsed by default, so new users can run an analysis quickly while experienced users can still tune the model and save presets.
 
 ## Features
 
@@ -287,6 +301,12 @@ fund-ranking-system
 
 ## Generated Outputs
 
+- Curated demo bundle: [docs/sample_outputs](docs/sample_outputs/README.md)
+- Word report sample: [analysis_reports.docx](docs/sample_outputs/analysis_reports.docx)
+- PDF report sample: [analysis_reports.pdf](docs/sample_outputs/analysis_reports.pdf)
+- Excel workbook sample: [analysis_data.xlsx](docs/sample_outputs/analysis_data.xlsx)
+- Deployment proof: [docs/deployment_checklist.md](docs/deployment_checklist.md)
+
 - `data/raw/demo_fund_nav.csv`
 - `data/raw/fund_metadata.csv`
 - `data/processed/fund_metrics.csv`
@@ -388,9 +408,9 @@ In this sample, the top-ranked portfolios still had negative returns, but they s
 
 - Add scheduled background updates for selected fund pools.
 - Add richer fund metadata, such as manager tenure, fee level, fee structure, and fund size.
-- Add transaction-cost assumptions, holding-period restrictions, and richer rebalance controls.
 - Add optional user authentication before any public deployment.
-- Add CI checks for tests, formatting, and documentation links.
+- Add stricter production observability: structured logs, task queue monitoring, and error tracking.
+- Add documentation link checks and Docker health checks in CI.
 
 ## Test
 

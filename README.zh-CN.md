@@ -1,6 +1,6 @@
 # 公募基金风险收益评价与量化筛选系统
 
-[English README](README.md) · [更新日志](CHANGELOG.md) · [贡献指南](CONTRIBUTING.md)
+[English README](README.md) · [更新日志](CHANGELOG.md) · [本地部署](docs/local_deployment.md) · [部署核查](docs/deployment_checklist.md) · [示例报告包](docs/sample_outputs/README.md) · [贡献指南](CONTRIBUTING.md)
 
 本项目是一个基于 Python 的公募基金历史表现分析与决策辅助系统。项目目标不是简单按历史收益率排序，而是搭建一套可复现、可解释、可下载、可复用配置的基金风险收益研究工作台，回答一个更贴近数据分析的问题：
 
@@ -67,6 +67,8 @@
 
 ![Ranking Results](docs/assets/web-results.png)
 
+![Chart Viewer](docs/assets/chart-viewer.png)
+
 ## 系统架构
 
 ```text
@@ -82,12 +84,14 @@ SQLite 本地缓存
       ↓
 风险等级、敏感性分析、研究报告
       ↓
-Web 页面、CSV、Markdown 报告、图表
+Web 页面、单图大图查看、Word/PDF/Excel 报告
 ```
 
 ## 文档索引
 
 - [本地部署说明](docs/local_deployment.md)
+- [部署核查清单](docs/deployment_checklist.md)
+- [示例报告包](docs/sample_outputs/README.md)
 - [Web 演示说明](docs/demo_guide.md)
 - [正式项目报告](docs/project_report.md)
 - [100 只真实基金样本验证](docs/real_world_validation.md)
@@ -97,13 +101,14 @@ Web 页面、CSV、Markdown 报告、图表
 系统会执行完整的数据分析闭环：
 
 ```text
-基金净值数据
-  -> 数据清洗
-  -> 收益率计算
-  -> 风险收益指标计算
-  -> 基金排名
-  -> 可视化图表
+选择基金代码或基金池
+  -> 数据质量诊断和模型效果评估
+  -> 原始、多因子动态权重、ML、组合结果对比
+  -> 单张大图查看重点图表
+  -> 导出 Word、PDF 和 Excel 报告
 ```
+
+首页把评分权重和组合约束放进默认收起的高级设置里，新用户可以更快开始分析；需要调参时仍然可以展开配置、保存方案并复用。
 
 多因子评分模型：
 
@@ -317,6 +322,14 @@ cd ~/fund-ranking-system
 ```
 
 ## 输出结果
+
+可直接预览的示例输出：
+
+- 示例说明：[docs/sample_outputs](docs/sample_outputs/README.md)
+- Word 综合报告：[analysis_reports.docx](docs/sample_outputs/analysis_reports.docx)
+- PDF 综合报告：[analysis_reports.pdf](docs/sample_outputs/analysis_reports.pdf)
+- Excel 数据汇总：[analysis_data.xlsx](docs/sample_outputs/analysis_data.xlsx)
+- 部署核查记录：[docs/deployment_checklist.md](docs/deployment_checklist.md)
 
 运行后会生成：
 

@@ -15,6 +15,7 @@ build/
 dist/
 tmp/
 *.docx
+!docs/sample_outputs/*.docx
 
 data/raw/**/*.csv
 data/processed/**/*.csv
@@ -26,3 +27,6 @@ reports/**/*.md
 reports/**/*.pdf
 reports/**/*.xlsx
 reports/web/
+!docs/sample_outputs/*.pdf
+!docs/sample_outputs/*.xlsx
+!docs/sample_outputs/*.png
