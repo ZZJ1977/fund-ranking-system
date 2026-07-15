@@ -186,6 +186,20 @@ curl -fsS http://127.0.0.1/health
 curl -fsS http://你的服务器公网IP/health
 ```
 
+如果浏览器打开后看到 Nginx 的 `500 Internal Server Error`，通常是 Basic Auth 密码文件权限过严，Nginx 容器无法读取。执行：
+
+```bash
+cd /opt/fund-ranking-system
+chmod 644 deploy/secrets/.htpasswd
+docker compose --env-file .env.production -f docker-compose.prod.yml restart nginx
+```
+
+然后重新打开：
+
+```text
+http://你的服务器公网IP
+```
+
 ## 9. 临时域名
 
 没有正式域名时，可以先直接用 IP：

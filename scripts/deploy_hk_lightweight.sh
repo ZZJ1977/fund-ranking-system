@@ -55,7 +55,7 @@ if [ ! -f "$HTPASSWD_FILE" ]; then
 
   hashed_password="$(openssl passwd -apr1 "$auth_password")"
   printf "%s:%s\n" "$auth_user" "$hashed_password" > "$HTPASSWD_FILE"
-  chmod 600 "$HTPASSWD_FILE"
+  chmod 644 "$HTPASSWD_FILE"
   echo "Created $HTPASSWD_FILE"
 fi
 
