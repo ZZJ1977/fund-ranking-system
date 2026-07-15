@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.5.0 - Product Readiness and Evaluation Layer
+
+- Added model effectiveness evaluation with Rank IC, Top hit-rate uplift, and ML-vs-base return uplift.
+- Added data quality diagnostics for NAV completeness, missing days, long gaps, abnormal jumps, quality scores, and recommendations.
+- Added strategy benchmark aggregation across static benchmarks, Walk-Forward, adaptive validation, and portfolio rebalance backtests.
+- Added saved analysis presets for custom factor weights and portfolio objectives/constraints in SQLite and the FastAPI web UI.
+- Added on-page previews and download links for model evaluation, data quality diagnostics, and strategy benchmark reports.
+- Included the new reports in Word, PDF, and Excel export bundles and refreshed product-facing README messaging.
+
+## v0.4.0 - Constrained Portfolio Optimization
+
+- Added configurable portfolio constraints for objective, fund count, single-fund weight cap, drawdown floor, Sharpe floor, rebalance interval, turnover cap, and transaction cost assumptions.
+- Added portfolio recommendation explanations, fund-type concentration controls, and pairwise correlation controls.
+- Added constrained optimized portfolio construction with objective-aware weights and turnover-aware rebalancing.
+- Added portfolio constraint CSV, recommendation CSV/report, risk-control CSV, optimized portfolio weight chart, and constrained rebalance backtest outputs.
+- Exposed portfolio constraints in the FastAPI web form, analysis history, downloads, and Office/Excel export bundle.
+- Updated CLI options so constrained portfolio analysis can run outside the web dashboard.
+
 ## v0.3.0 - ML-Assisted Scoring
 
 - Added walk-forward training sample generation for machine-learning assisted factor learning.

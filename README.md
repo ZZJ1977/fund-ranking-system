@@ -2,13 +2,13 @@
 
 ![CI](https://github.com/ZZJ1977/fund-ranking-system/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Version](https://img.shields.io/badge/Version-v0.3.0-176b87)
+![Version](https://img.shields.io/badge/Version-v0.5.0-176b87)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Web%20Dashboard-009688)
 ![AkShare](https://img.shields.io/badge/Data-AkShare-orange)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-A local-first mutual fund risk-return analysis system for China's public fund market. It fetches real NAV data through AkShare, caches it in SQLite, ranks funds with a transparent multi-factor model, and generates charts, CSV files, and Markdown reports.
+A local-first mutual fund risk-return research workstation for China's public fund market. It fetches real NAV data through AkShare, caches it in SQLite, ranks funds with transparent multi-factor and ML-assisted models, checks data quality and model effectiveness, compares strategies against benchmarks, and exports Word/PDF/Excel reports.
 
 [中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
 
@@ -21,7 +21,7 @@ A local-first mutual fund risk-return analysis system for China's public fund ma
 - Multi-factor scoring across return, volatility, drawdown, Sharpe, Calmar, and rolling stability.
 - Three investor profiles: `aggressive`, `balanced`, and `conservative`.
 - Explainable rankings with risk labels, data-quality warnings, and natural-language reasons.
-- Walk-forward validation, ML-assisted scoring, factor diagnostics, factor contribution analysis, LIME-style local explanations, Office/PDF exports, and weight robustness checks.
+- Walk-forward validation, ML-assisted scoring, model effectiveness evaluation, data quality diagnostics, dynamic fund-level weights, portfolio construction, portfolio recommendation explanations, concentration/correlation controls, portfolio rebalance benchmarking, LIME-style local explanations, saved analysis presets, Office/PDF exports, and weight robustness checks.
 - Docker and Windows/macOS/Linux local deployment instructions.
 
 ## Preview
@@ -58,15 +58,29 @@ It is designed as a small but complete financial data application rather than a 
 | Risk labels | Generates risk levels, observation labels, and explanatory reasons |
 | Fund type grouping | Infers broad fund types and adds within-type ranking |
 | Data quality checks | Flags short sample windows, missing rolling windows, and abnormal volatility |
+| Data quality diagnostics | Scores NAV completeness, missing days, long gaps, abnormal jumps, and gives remediation suggestions |
 | Natural-language explanations | Explains ranking results in readable Chinese text |
 | Web dashboard | Search funds, analyze fund pools, view charts, and download reports |
+| Fund detail pages | Drill into one fund's metrics, ranks, dynamic weights, LIME, and factor contributions |
 | SQLite cache | Stores fund metadata, NAV history, custom fund pools, and analysis runs |
+| Saved analysis presets | Saves custom factor weights and portfolio targets/constraints for reuse |
 | Independent result pages | Keeps each analysis run in a separate report directory |
 | Fund universe filter | Applies comparable-universe rules and A/C share-class deduplication |
+| Fund quality governance | Scores history length, NAV completeness, abnormal jumps, and suspected duplicated strategies |
 | Factor diagnostics | Reports Spearman factor correlations to flag information overlap |
 | Exact score explanation | Decomposes each weighted score into factor contributions |
 | LIME local explanation | Uses local perturbations and a weighted linear surrogate to explain score sensitivity around one fund |
 | ML-assisted scoring | Learns factor weights from walk-forward samples and produces an ML comparison ranking |
+| Model effectiveness evaluation | Compares ML vs base weights with Rank IC, Top hit-rate uplift, and future-return uplift |
+| Benchmarks and peers | Compares Top-N portfolios against the fund-pool benchmark, optional external benchmark, and peer percentiles |
+| Strategy benchmark layer | Aggregates static benchmark, Walk-Forward, adaptive validation, and rebalance backtest results |
+| Portfolio construction | Builds base Top-N, adaptive Top-N, ML Top-N, risk-parity, drawdown-constrained, and user-constrained portfolios |
+| Portfolio recommendation explanations | Explains why each fund is selected, why it receives its weight, and what risk/diversification notes apply |
+| Portfolio constraints | Lets users configure objective, holding count, single-fund cap, fund-type cap, correlation threshold, drawdown floor, Sharpe floor, turnover cap, and transaction cost assumptions |
+| Concentration and correlation controls | Tracks inferred fund-type exposure and high-correlation fund pairs in dedicated risk-control outputs |
+| Portfolio rebalance backtest | Re-ranks funds on rolling windows and compares fixed, adaptive, constrained, risk-parity, and all-fund portfolios |
+| Explanation visuals | Exports dynamic-weight, LIME local-weight, and rank-change charts |
+| Adaptive validation | Tests fund-level dynamic weights with walk-forward out-of-sample validation |
 | User-friendly exports | Exports a Word report bundle, PDF report bundle, and Excel data workbook |
 | Walk-forward validation | Tests whether high-ranked funds show out-of-sample differentiation |
 | Weight robustness | Uses Monte Carlo weight perturbation to measure ranking stability |
@@ -81,10 +95,24 @@ cd fund-ranking-system
 bash scripts/run_web.sh
 ```
 
+For a detached local service with a PID file and log:
+
+```bash
+bash scripts/start_web.sh
+tail -f tmp/fund-ranking-web.log
+bash scripts/stop_web.sh
+```
+
 Open:
 
 ```text
 http://127.0.0.1:8000
+```
+
+Health check:
+
+```text
+http://127.0.0.1:8000/health
 ```
 
 Try these fund codes:
@@ -131,6 +159,8 @@ data/
 reports/
 ```
 
+`docker compose ps` shows the container health status after startup.
+
 ## Real Fund Sample
 
 You can start with a diversified 30-fund sample covering active equity, hybrid, consumption, healthcare, technology, index-linked, LOF, and QDII funds:
@@ -173,6 +203,29 @@ Analyze your own wide-format NAV CSV:
 
 ```bash
 fund-ranking --input data/raw/your_fund_nav.csv --profile balanced
+```
+
+Optionally include an external benchmark NAV CSV, such as an index series:
+
+```bash
+fund-ranking --input data/raw/your_fund_nav.csv --benchmark data/raw/benchmark_nav.csv --profile balanced
+```
+
+Run constrained portfolio optimization from the CLI:
+
+```bash
+fund-ranking --input data/raw/your_fund_nav.csv --profile balanced \
+  --portfolio-objective defensive \
+  --portfolio-min-funds 4 \
+  --portfolio-max-funds 8 \
+  --max-position-weight 0.25 \
+  --max-type-weight 0.55 \
+  --max-pair-correlation 0.85 \
+  --portfolio-max-drawdown -0.35 \
+  --portfolio-min-sharpe 0.1 \
+  --rebalance-days 63 \
+  --max-turnover 0.4 \
+  --transaction-cost-bps 8
 ```
 
 Expected CSV format:
@@ -242,17 +295,46 @@ fund-ranking-system
 - `reports/weight_sensitivity.csv`
 - `reports/weight_sensitivity.md`
 - `reports/fund_universe.md`
+- `reports/data_quality_diagnostics.md`
+- `reports/data_quality_diagnostics.csv`
 - `reports/factor_diagnostics.md`
 - `reports/factor_contributions.md`
 - `reports/lime_explanations.md`
 - `reports/lime_explanations.csv`
+- `reports/adaptive_weight_report.md`
+- `reports/adaptive_factor_weights.csv`
+- `reports/ranking_adaptive_<profile>.csv`
+- `reports/benchmark_comparison.md`
+- `reports/benchmark_comparison.csv`
+- `reports/peer_comparison_<profile>.csv`
+- `reports/portfolio_construction.md`
+- `reports/portfolio_summary.csv`
+- `reports/portfolio_weights_<profile>.csv`
+- `reports/portfolio_constraints.csv`
+- `reports/portfolio_recommendation.md`
+- `reports/portfolio_recommendations.csv`
+- `reports/portfolio_risk_controls.csv`
+- `reports/portfolio_optimized_weights.png`
+- `reports/portfolio_rebalance_report.md`
+- `reports/portfolio_rebalance_results.csv`
+- `reports/portfolio_rebalance_periods.csv`
+- `reports/portfolio_rebalance_cumulative_return.png`
+- `reports/adaptive_backtest_summary.md`
+- `reports/adaptive_walk_forward_results.csv`
+- `reports/dynamic_weight_top_factors.png`
+- `reports/lime_local_weight_bars.png`
+- `reports/rank_comparison_changes.png`
 - `reports/ml_model_report.md`
+- `reports/ml_evaluation.md`
+- `reports/ml_evaluation.csv`
 - `reports/ml_learned_weights.csv`
 - `reports/ranking_ml_<profile>.csv`
 - `reports/ml_training_samples.csv`
 - `reports/ranking_comparison_<profile>.csv`
 - `reports/ranking_comparison.md`
 - `reports/weight_robustness.md`
+- `reports/strategy_benchmark.md`
+- `reports/strategy_benchmark.csv`
 - `reports/backtest_summary.md`
 - `reports/walk_forward_results.csv`
 - `reports/fund_analysis_report.md`
@@ -266,6 +348,7 @@ Ranking tables include:
 - `fund_type`: inferred broad fund type, such as equity, hybrid, bond, index, money market, or QDII
 - `type_rank`: rank within the same inferred fund type
 - `data_quality`: data coverage and calculation quality warning
+- `quality_score`: fund-pool quality score based on history, completeness, and abnormal NAV jumps
 - `result_explanation`: natural-language explanation of each result
 
 ## Model Validation
@@ -304,8 +387,8 @@ In this sample, the top-ranked portfolios still had negative returns, but they s
 ## Roadmap
 
 - Add scheduled background updates for selected fund pools.
-- Add richer fund metadata, such as manager tenure, fee level, and fund size.
-- Add more formal backtesting controls and benchmark comparison.
+- Add richer fund metadata, such as manager tenure, fee level, fee structure, and fund size.
+- Add transaction-cost assumptions, holding-period restrictions, and richer rebalance controls.
 - Add optional user authentication before any public deployment.
 - Add CI checks for tests, formatting, and documentation links.
 

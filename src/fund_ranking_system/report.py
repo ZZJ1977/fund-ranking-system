@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from .adaptive_weights import adaptive_weight_snapshot
 from .metadata import display_fund
 
 
@@ -57,14 +58,15 @@ def build_report(
     profile: str,
     top_n: int,
     figures: list[str],
+    adaptive_scored: pd.DataFrame | None = None,
+    adaptive_weights: pd.DataFrame | None = None,
 ) -> str:
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-    weight_lines = "\n".join(
-        f"- `{metric}`: {weight:.0%}" for metric, weight in weights.items()
-    )
+    weight_lines = "\n".join(f"- `{metric}`: {weight:.0%}" for metric, weight in weights.items())
     figure_lines = "\n".join(f"- `{figure}`" for figure in figures)
     top_row = scored.iloc[0]
     top_fund = display_fund(str(scored.index[0]), top_row)
+    dynamic_section = _dynamic_weight_section(adaptive_scored, adaptive_weights, top_n)
 
     return f"""# 公募基金风险收益评价分析报告
 
@@ -82,9 +84,13 @@ def build_report(
 
 `{profile}`
 
-## 因子权重
+## 基础画像权重
+
+以下权重是 `{profile}` 投资者画像的基础偏好，用于定义评价方向，并不是每只基金最终完全相同的动态权重。
 
 {weight_lines}
+
+{dynamic_section}
 
 ## Top {top_n} 基金排名
 
@@ -115,3 +121,50 @@ def save_report(report: str, path: str | Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(report, encoding="utf-8")
     return path
+
+
+def _dynamic_weight_section(
+    adaptive_scored: pd.DataFrame | None,
+    adaptive_weights: pd.DataFrame | None,
+    top_n: int,
+) -> str:
+    if adaptive_scored is None or adaptive_weights is None or adaptive_scored.empty or adaptive_weights.empty:
+        return """## 基金级动态权重
+
+本次分析未生成基金级动态权重，报告仅展示基础画像权重。
+"""
+
+    ranking_rows = [
+        "| 动态排名 | 基金 | 动态评分 | 原始排名 | 主要动态权重 | 调整说明 |",
+        "|---:|---|---:|---:|---|---|",
+    ]
+    for fund, row in adaptive_scored.head(min(top_n, 8)).iterrows():
+        ranking_rows.append(
+            "| {rank} | {fund} | {score:.2f} | {base_rank} | {factors} | {reason} |".format(
+                rank=int(row["dynamic_rank"]),
+                fund=display_fund(str(fund), row),
+                score=float(row["dynamic_score"]),
+                base_rank=_format_rank(row.get("base_rank")),
+                factors=row.get("top_dynamic_factors", ""),
+                reason=row.get("dynamic_weight_reason", ""),
+            )
+        )
+    snapshot = adaptive_weight_snapshot(adaptive_weights, list(adaptive_scored.head(min(top_n, 8)).index))
+    return f"""## 基金级动态权重
+
+系统会在基础画像权重上，根据每只基金自身的收益、回撤、波动、风险调整收益和收益稳定性做局部微调。因此，同一个 `{top_n}` 排名里的不同基金会有不同的动态因子权重。
+
+### 动态权重排名预览
+
+{chr(10).join(ranking_rows)}
+
+### Top 基金动态权重明细
+
+{snapshot}
+"""
+
+
+def _format_rank(value: object) -> str:
+    if pd.isna(value):
+        return ""
+    return str(int(float(value)))

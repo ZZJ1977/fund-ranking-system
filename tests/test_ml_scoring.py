@@ -54,7 +54,8 @@ class MLScoringTest(unittest.TestCase):
 
             self.assertTrue(all(path.exists() for path in paths))
             self.assertIn("机器学习辅助评分报告", paths[3].read_text(encoding="utf-8"))
-            self.assertIn("原始排名 vs ML 排名对比", paths[-1].read_text(encoding="utf-8"))
+            self.assertIn("原始排名 vs ML 排名对比", paths[5].read_text(encoding="utf-8"))
+            self.assertIn("模型效果评估", paths[-1].read_text(encoding="utf-8"))
 
 
 def _sample_nav() -> pd.DataFrame:

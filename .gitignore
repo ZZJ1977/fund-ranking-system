@@ -13,6 +13,7 @@ __pycache__/
 src/*.egg-info/
 build/
 dist/
+tmp/
 *.docx
 
 data/raw/**/*.csv
@@ -22,4 +23,6 @@ data/processed/web/
 reports/**/*.csv
 reports/**/*.png
 reports/**/*.md
+reports/**/*.pdf
+reports/**/*.xlsx
 reports/web/

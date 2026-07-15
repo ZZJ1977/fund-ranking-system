@@ -7,9 +7,16 @@ import pandas as pd
 
 from fund_ranking_system.diagnostics import factor_correlation
 from fund_ranking_system.explainability import calculate_factor_contributions
-from fund_ranking_system.fund_universe import build_fund_universe, share_class_group
+from fund_ranking_system.fund_universe import build_fund_universe, share_class_group, strategy_name_group
 from fund_ranking_system.sensitivity import monte_carlo_weight_perturbation
-from fund_ranking_system.validation import walk_forward_backtest, save_walk_forward_outputs
+from fund_ranking_system.benchmark import build_benchmark_comparison, build_peer_comparison
+from fund_ranking_system.scoring import score_funds
+from fund_ranking_system.validation import (
+    adaptive_walk_forward_backtest,
+    save_adaptive_walk_forward_outputs,
+    save_walk_forward_outputs,
+    walk_forward_backtest,
+)
 
 
 class ResearchValidationTest(unittest.TestCase):
@@ -36,6 +43,9 @@ class ResearchValidationTest(unittest.TestCase):
 
         self.assertEqual(len(filtered), 1)
         self.assertEqual(share_class_group("成长基金C"), "成长基金")
+        self.assertEqual(strategy_name_group("成长基金混合A"), "成长基金")
+        self.assertIn("quality_score", audit.columns)
+        self.assertIn("quality_flags", audit.columns)
         self.assertFalse(audit.loc["B", "universe_eligible"])
 
     def test_factor_contributions_sum_to_score(self):
@@ -101,6 +111,72 @@ class ResearchValidationTest(unittest.TestCase):
                 top_n=1,
             )
             self.assertTrue(all(path.exists() for path in paths))
+
+    def test_adaptive_walk_forward_backtest_outputs_summary(self):
+        dates = pd.date_range("2020-01-01", periods=420)
+        nav = pd.DataFrame(
+            {
+                "A": np.cumprod(np.full(len(dates), 1.0008)),
+                "B": np.cumprod(np.full(len(dates), 1.0002)),
+                "C": np.cumprod(np.full(len(dates), 0.9999)),
+            },
+            index=dates,
+        )
+        weights = {
+            "annual_return": 0.5,
+            "sharpe": 0.2,
+            "max_drawdown": 0.1,
+            "calmar": 0.1,
+            "annual_volatility": 0.05,
+            "rolling_positive_ratio": 0.05,
+        }
+
+        summary, periods = adaptive_walk_forward_backtest(
+            nav,
+            weights,
+            lookback_days=120,
+            holding_days=30,
+            step_days=30,
+            top_n=1,
+            min_funds=2,
+        )
+
+        self.assertIn("Adaptive TopN", summary.index)
+        self.assertFalse(periods.empty)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            paths = save_adaptive_walk_forward_outputs(
+                nav,
+                weights,
+                Path(tmpdir),
+                lookback_days=120,
+                holding_days=30,
+                step_days=30,
+                top_n=1,
+            )
+            self.assertTrue(all(path.exists() for path in paths))
+
+    def test_benchmark_and_peer_comparison(self):
+        dates = pd.date_range("2020-01-01", periods=180)
+        nav = pd.DataFrame(
+            {
+                "A": np.cumprod(np.full(len(dates), 1.0008)),
+                "B": np.cumprod(np.full(len(dates), 1.0002)),
+                "C": np.cumprod(np.full(len(dates), 0.9999)),
+            },
+            index=dates,
+        )
+        metrics = _sample_metrics()
+        metrics["fund_type"] = ["混合型", "混合型", "债券型"]
+        scored = score_funds(metrics, {"annual_return": 0.5, "sharpe": 0.5})
+        scored["type_rank"] = [2, 1, 1]
+
+        external = pd.DataFrame({"沪深300": np.cumprod(np.full(len(dates), 1.0001))}, index=dates)
+        benchmark = build_benchmark_comparison(nav, scored, None, None, top_n=1, external_benchmark=external)
+        peers = build_peer_comparison(scored, None, None)
+
+        self.assertIn("基金池等权基准", set(benchmark["portfolio"]))
+        self.assertIn("外部基准：沪深300", set(benchmark["portfolio"]))
+        self.assertIn("type_percentile", peers.columns)
 
     def test_factor_correlation(self):
         corr = factor_correlation(_sample_metrics())

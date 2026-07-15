@@ -31,10 +31,24 @@ bash scripts/run_web.sh
 2. 安装项目依赖。
 3. 启动本地 Web 服务。
 
+如果希望服务在后台运行，并把日志写到本地文件：
+
+```bash
+bash scripts/start_web.sh
+tail -f tmp/fund-ranking-web.log
+bash scripts/stop_web.sh
+```
+
 启动成功后打开：
 
 ```bash
 open http://127.0.0.1:8000
+```
+
+健康检查地址：
+
+```text
+http://127.0.0.1:8000/health
 ```
 
 Windows PowerShell 用户可以手动执行：
@@ -79,6 +93,12 @@ Docker 会把运行产物保存在本地目录：
 ```text
 data/
 reports/
+```
+
+查看容器健康状态：
+
+```bash
+docker compose ps
 ```
 
 停止服务：

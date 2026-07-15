@@ -21,8 +21,17 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 MARKDOWN_REPORTS = [
     ("主分析报告", "fund_analysis_report.md"),
+    ("基准与同类对比报告", "benchmark_comparison.md"),
+    ("组合构建报告", "portfolio_construction.md"),
+    ("组合建议说明书", "portfolio_recommendation.md"),
+    ("组合再平衡回测", "portfolio_rebalance_report.md"),
+    ("基金级动态权重报告", "adaptive_weight_report.md"),
+    ("动态权重 Walk-Forward 验证", "adaptive_backtest_summary.md"),
     ("ML 辅助评分报告", "ml_model_report.md"),
+    ("模型效果评估", "ml_evaluation.md"),
     ("原始排名 vs ML 排名对比", "ranking_comparison.md"),
+    ("策略回测基准对比", "strategy_benchmark.md"),
+    ("数据质量诊断", "data_quality_diagnostics.md"),
     ("基金池准入报告", "fund_universe.md"),
     ("Walk-Forward 验证报告", "backtest_summary.md"),
     ("因子贡献解释", "factor_contributions.md"),
@@ -36,9 +45,23 @@ MARKDOWN_REPORTS = [
 
 CSV_REPORTS = [
     ("ML学习权重", "ml_learned_weights.csv", "reports"),
+    ("基金级动态权重", "adaptive_factor_weights.csv", "reports"),
+    ("动态权重排名", None, "reports"),
+    ("基准组合对比", "benchmark_comparison.csv", "reports"),
+    ("同类基金对比", None, "reports"),
+    ("组合构建摘要", "portfolio_summary.csv", "reports"),
+    ("组合持仓权重", None, "reports"),
+    ("组合约束配置", "portfolio_constraints.csv", "reports"),
+    ("组合建议明细", "portfolio_recommendations.csv", "reports"),
+    ("组合风险控制", "portfolio_risk_controls.csv", "reports"),
+    ("组合再平衡结果", "portfolio_rebalance_results.csv", "reports"),
+    ("组合再平衡窗口", "portfolio_rebalance_periods.csv", "reports"),
+    ("动态权重验证结果", "adaptive_walk_forward_results.csv", "reports"),
+    ("动态权重验证窗口", "adaptive_walk_forward_periods.csv", "reports"),
     ("ML辅助排名", None, "reports"),
     ("排名对比", None, "reports"),
     ("ML训练样本", "ml_training_samples.csv", "reports"),
+    ("模型效果评估", "ml_evaluation.csv", "reports"),
     ("LIME局部解释", "lime_explanations.csv", "reports"),
     ("因子贡献", "factor_contributions.csv", "reports"),
     ("WalkForward结果", "walk_forward_results.csv", "reports"),
@@ -46,6 +69,8 @@ CSV_REPORTS = [
     ("权重敏感性", "weight_sensitivity.csv", "reports"),
     ("权重稳健性", "weight_robustness.csv", "reports"),
     ("基金池准入", "fund_universe.csv", "reports"),
+    ("数据质量诊断", "data_quality_diagnostics.csv", "reports"),
+    ("策略回测基准", "strategy_benchmark.csv", "reports"),
     ("当前画像排名", None, "reports"),
     ("全部画像排名", "ranking_all_profiles.csv", "processed"),
     ("指标明细", "fund_metrics.csv", "processed"),
@@ -243,6 +268,12 @@ def _write_xlsx(reports_dir: Path, processed_dir: Path, profile: str, path: Path
         actual_filename = filename
         if sheet_name == "ML辅助排名":
             actual_filename = f"ranking_ml_{profile}.csv"
+        elif sheet_name == "动态权重排名":
+            actual_filename = f"ranking_adaptive_{profile}.csv"
+        elif sheet_name == "同类基金对比":
+            actual_filename = f"peer_comparison_{profile}.csv"
+        elif sheet_name == "组合持仓权重":
+            actual_filename = f"portfolio_weights_{profile}.csv"
         elif sheet_name == "排名对比":
             actual_filename = f"ranking_comparison_{profile}.csv"
         elif sheet_name == "当前画像排名":

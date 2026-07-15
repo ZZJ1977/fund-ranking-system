@@ -17,5 +17,5 @@ if [ ! -d ".venv" ]; then
   python3 -m venv .venv
 fi
 
-.venv/bin/python -m pip install -e .
+.venv/bin/python -m pip install -q -e .
 .venv/bin/fund-ranking-web --host "$HOST" --port "$PORT"

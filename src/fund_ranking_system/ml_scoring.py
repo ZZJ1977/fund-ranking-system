@@ -8,6 +8,7 @@ import pandas as pd
 
 from .metrics import calculate_metrics
 from .metadata import display_fund
+from .model_evaluation import save_model_evaluation_outputs
 from .scoring import LOWER_IS_BETTER, SCORE_METRICS, score_funds
 
 
@@ -212,7 +213,7 @@ def save_ml_outputs(
     lookback_days: int = 252,
     holding_days: int = 63,
     step_days: int = 63,
-) -> tuple[Path, Path, Path, Path, Path, Path]:
+) -> tuple[Path, Path, Path, Path, Path, Path, Path, Path]:
     """Generate ML-assisted weights, ranking, and report outputs."""
     reports_dir = Path(reports_dir)
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -245,6 +246,12 @@ def save_ml_outputs(
     result.coefficient_table.to_csv(weights_path, index=False)
     ml_scored.to_csv(ranking_path)
     comparison.to_csv(comparison_path, index=False)
+    evaluation_path, evaluation_report_path = save_model_evaluation_outputs(
+        samples,
+        base_weights,
+        result.weights,
+        reports_dir,
+    )
     report_path.write_text(
         build_ml_report(
             ml_scored,
@@ -265,6 +272,8 @@ def save_ml_outputs(
         report_path,
         comparison_path,
         comparison_report_path,
+        evaluation_path,
+        evaluation_report_path,
     )
 
 
