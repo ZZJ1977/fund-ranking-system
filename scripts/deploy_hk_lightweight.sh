@@ -7,6 +7,9 @@ COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE=".env.production"
 ENV_TEMPLATE="deploy/env.production.example"
 HTPASSWD_FILE="deploy/secrets/.htpasswd"
+NGINX_RUNTIME_CONFIG="deploy/runtime/nginx.conf"
+NGINX_AUTH_CONFIG="deploy/nginx/fund-ranking.conf"
+NGINX_NO_AUTH_CONFIG="deploy/nginx/fund-ranking.no-auth.conf"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "Docker is not installed. Install Docker first, then rerun this script." >&2
@@ -36,28 +39,40 @@ set +a
 
 PUBLIC_PORT="${PUBLIC_HTTP_PORT:-80}"
 
-mkdir -p data reports deploy/secrets
+mkdir -p data reports deploy/secrets deploy/runtime
 
-if [ ! -f "$HTPASSWD_FILE" ]; then
-  if ! command -v openssl >/dev/null 2>&1; then
-    echo "openssl is required to generate the Basic Auth password file." >&2
-    exit 1
-  fi
+basic_auth="${PUBLIC_BASIC_AUTH:-1}"
+case "${basic_auth,,}" in
+  0|false|no|off)
+    cp "$NGINX_NO_AUTH_CONFIG" "$NGINX_RUNTIME_CONFIG"
+    touch "$HTPASSWD_FILE"
+    chmod 644 "$HTPASSWD_FILE"
+    echo "Basic Auth is disabled. The public IP will be open without a login prompt."
+    ;;
+  *)
+    cp "$NGINX_AUTH_CONFIG" "$NGINX_RUNTIME_CONFIG"
+    if [ ! -f "$HTPASSWD_FILE" ]; then
+      if ! command -v openssl >/dev/null 2>&1; then
+        echo "openssl is required to generate the Basic Auth password file." >&2
+        exit 1
+      fi
 
-  read -r -p "Basic Auth username [fundadmin]: " auth_user
-  auth_user="${auth_user:-fundadmin}"
-  read -r -s -p "Basic Auth password: " auth_password
-  echo
-  if [ -z "$auth_password" ]; then
-    echo "Password cannot be empty." >&2
-    exit 1
-  fi
+      read -r -p "Basic Auth username [fundadmin]: " auth_user
+      auth_user="${auth_user:-fundadmin}"
+      read -r -s -p "Basic Auth password: " auth_password
+      echo
+      if [ -z "$auth_password" ]; then
+        echo "Password cannot be empty." >&2
+        exit 1
+      fi
 
-  hashed_password="$(openssl passwd -apr1 "$auth_password")"
-  printf "%s:%s\n" "$auth_user" "$hashed_password" > "$HTPASSWD_FILE"
-  chmod 644 "$HTPASSWD_FILE"
-  echo "Created $HTPASSWD_FILE"
-fi
+      hashed_password="$(openssl passwd -apr1 "$auth_password")"
+      printf "%s:%s\n" "$auth_user" "$hashed_password" > "$HTPASSWD_FILE"
+      chmod 644 "$HTPASSWD_FILE"
+      echo "Created $HTPASSWD_FILE"
+    fi
+    ;;
+esac
 
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up --build -d
 

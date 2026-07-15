@@ -117,9 +117,18 @@ FUND_RANKING_PORT=8000
 FUND_RANKING_DB=data/fund_ranking.db
 PUBLIC_HTTP_PORT=80
 PUBLIC_HOST=你的服务器公网IP
+PUBLIC_BASIC_AUTH=1
 ```
 
 `data/` 会保存 SQLite 数据库和净值缓存，`reports/` 会保存每次分析生成的报告、图片和下载文件。
+
+如果只是临时演示，并且希望不用账号密码登录，可以设置：
+
+```text
+PUBLIC_BASIC_AUTH=0
+```
+
+注意：关闭后任何知道公网 IP 的人都可以打开页面。
 
 ## 7. 一键部署
 
@@ -133,7 +142,7 @@ bash scripts/deploy_hk_lightweight.sh
 
 1. 创建 `.env.production`，如果还不存在。
 2. 创建 `data/`、`reports/` 和 `deploy/secrets/`。
-3. 生成 Nginx Basic Auth 密码文件。
+3. 根据 `PUBLIC_BASIC_AUTH` 生成 Nginx 配置。
 4. 构建并启动应用容器和 Nginx 容器。
 5. 检查 `/health` 是否正常。
 
@@ -143,7 +152,9 @@ bash scripts/deploy_hk_lightweight.sh
 http://你的服务器公网IP
 ```
 
-浏览器会弹出用户名和密码。用户名/密码就是脚本里创建 Basic Auth 时输入的内容。
+如果 `PUBLIC_BASIC_AUTH=1`，浏览器会弹出用户名和密码。用户名/密码就是脚本里创建 Basic Auth 时输入的内容。
+
+如果 `PUBLIC_BASIC_AUTH=0`，浏览器会直接打开页面。
 
 ## 8. 常用运维命令
 

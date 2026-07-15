@@ -31,7 +31,7 @@ services:
     ports:
       - "${PUBLIC_HTTP_PORT:-80}:80"
     volumes:
-      - ./deploy/nginx/fund-ranking.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/runtime/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./deploy/secrets/.htpasswd:/etc/nginx/.htpasswd:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/health || exit 1"]
