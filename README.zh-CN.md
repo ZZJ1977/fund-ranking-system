@@ -1,6 +1,6 @@
 # 公募基金风险收益评价与量化筛选系统
 
-[English README](README.md) · [更新日志](CHANGELOG.md) · [本地部署](docs/local_deployment.md) · [部署核查](docs/deployment_checklist.md) · [示例报告包](docs/sample_outputs/README.md) · [贡献指南](CONTRIBUTING.md)
+[English README](README.md) · [更新日志](CHANGELOG.md) · [本地部署](docs/local_deployment.md) · [阿里云香港部署](docs/aliyun_hk_deployment.md) · [部署核查](docs/deployment_checklist.md) · [示例报告包](docs/sample_outputs/README.md) · [贡献指南](CONTRIBUTING.md)
 
 本项目是一个基于 Python 的公募基金历史表现分析与决策辅助系统。项目目标不是简单按历史收益率排序，而是搭建一套可复现、可解释、可下载、可复用配置的基金风险收益研究工作台，回答一个更贴近数据分析的问题：
 
@@ -90,6 +90,7 @@ Web 页面、单图大图查看、Word/PDF/Excel 报告
 ## 文档索引
 
 - [本地部署说明](docs/local_deployment.md)
+- [阿里云香港轻量服务器部署说明](docs/aliyun_hk_deployment.md)
 - [部署核查清单](docs/deployment_checklist.md)
 - [示例报告包](docs/sample_outputs/README.md)
 - [Web 演示说明](docs/demo_guide.md)

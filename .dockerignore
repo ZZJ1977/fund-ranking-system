@@ -13,6 +13,8 @@ __pycache__
 .DS_Store
 .env
 .env.local
+.env.production
+deploy/secrets/.htpasswd
 data/
 reports/
 docs/assets/demo.gif

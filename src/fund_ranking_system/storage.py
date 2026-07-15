@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -8,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_DB_PATH = Path("data/fund_ranking.db")
+DEFAULT_DB_PATH = Path(os.environ.get("FUND_RANKING_DB", "data/fund_ranking.db"))
 
 
 class FundDatabase:

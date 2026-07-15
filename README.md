@@ -10,7 +10,7 @@
 
 A local-first mutual fund risk-return research workstation for China's public fund market. It fetches real NAV data through AkShare, caches it in SQLite, ranks funds with transparent multi-factor and ML-assisted models, checks data quality and model effectiveness, compares strategies against benchmarks, and exports Word/PDF/Excel reports.
 
-[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Deployment Checklist](docs/deployment_checklist.md) · [Sample Outputs](docs/sample_outputs/README.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
+[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Aliyun HK Deployment](docs/aliyun_hk_deployment.md) · [Deployment Checklist](docs/deployment_checklist.md) · [Sample Outputs](docs/sample_outputs/README.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
 
 > This project is for historical performance analysis and research assistance only. It is not personalized investment advice, a return guarantee, or a buy/sell signal.
 
