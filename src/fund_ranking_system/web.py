@@ -2237,6 +2237,15 @@ def _available_figures(
 ) -> list[tuple[str, str, str]]:
     if run_id is None:
         roots = {"reports": WEB_REPORTS_DIR, "processed": WEB_PROCESSED_DIR}
+        available = []
+        seen_labels = set()
+        for group, label, href, root_name, filename in files:
+            path = roots[root_name] / filename
+            chart_href = _versioned_href(href, path) if path.exists() else href
+            if label not in seen_labels:
+                available.append((group, label, chart_href))
+                seen_labels.add(label)
+        return available
     else:
         run = FundDatabase().get_run(run_id)
         if run is None:
