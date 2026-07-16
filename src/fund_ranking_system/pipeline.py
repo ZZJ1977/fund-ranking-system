@@ -8,7 +8,7 @@ import pandas as pd
 from .adaptive_weights import save_adaptive_weight_outputs
 from .advisory import add_decision_labels
 from .benchmark import save_benchmark_outputs
-from .data import generate_demo_nav, load_nav_csv, save_nav_csv
+from .data import align_nav_to_common_start, generate_demo_nav, load_nav_csv, save_nav_csv
 from .data_quality import save_data_quality_outputs
 from .diagnostics import save_factor_diagnostics
 from .explainability import save_explainability_outputs
@@ -49,6 +49,7 @@ class PipelineResult:
     universe_report_path: Path
     data_quality_csv_path: Path
     data_quality_report_path: Path
+    analysis_window_path: Path
     factor_correlation_path: Path
     factor_diagnostics_path: Path
     factor_contribution_path: Path
@@ -118,6 +119,7 @@ def run_pipeline(
     max_drawdown_limit: float = -0.6,
     portfolio_constraints: PortfolioConstraints | dict[str, object] | None = None,
     custom_weights: dict[str, float] | None = None,
+    requested_start_date: str | None = None,
 ) -> PipelineResult:
     portfolio_constraints = normalize_portfolio_constraints(portfolio_constraints)
     profile_weight_map = _profile_weight_map(profile, custom_weights)
@@ -131,6 +133,22 @@ def run_pipeline(
     else:
         nav = load_nav_csv(input_path)
         data_source = input_path
+    requested_start = _date_label(requested_start_date) if requested_start_date else _date_label(nav.index.min())
+    raw_start = _date_label(nav.index.min())
+    nav = align_nav_to_common_start(nav)
+    if nav.empty:
+        raise ValueError("No valid NAV data found after aligning fund start dates.")
+    effective_start = _date_label(nav.index.min())
+    analysis_end = _date_label(nav.index.max())
+    analysis_window_path = _save_analysis_window(
+        reports_dir / "analysis_window.csv",
+        requested_start=requested_start,
+        raw_start=raw_start,
+        effective_start=effective_start,
+        analysis_end=analysis_end,
+        fund_count=len(nav.columns),
+        row_count=len(nav),
+    )
     benchmark_nav = load_nav_csv(benchmark_path) if benchmark_path is not None and benchmark_path.exists() else None
 
     metrics = calculate_metrics(nav, risk_free_rate=risk_free_rate)
@@ -291,6 +309,9 @@ def run_pipeline(
         figures=[str(path) for path in figure_paths],
         adaptive_scored=adaptive_scored,
         adaptive_weights=adaptive_weight_table,
+        requested_start=requested_start,
+        effective_start=effective_start,
+        analysis_end=analysis_end,
     )
     report_path = save_report(report, reports_dir / "fund_analysis_report.md")
     research_csv_path, research_report_path = build_research_enhancement(selected_scored, reports_dir)
@@ -391,6 +412,7 @@ def run_pipeline(
         universe_report_path=universe_report_path,
         data_quality_csv_path=data_quality_csv_path,
         data_quality_report_path=data_quality_report_path,
+        analysis_window_path=analysis_window_path,
         factor_correlation_path=factor_correlation_path,
         factor_diagnostics_path=factor_diagnostics_path,
         factor_contribution_path=factor_contribution_path,
@@ -461,6 +483,37 @@ def _load_ml_reference_weights(path: Path, fallback: dict[str, float]) -> dict[s
         if pd.notna(row.final_weight)
     }
     return weights or fallback
+
+
+def _save_analysis_window(
+    path: Path,
+    *,
+    requested_start: str,
+    raw_start: str,
+    effective_start: str,
+    analysis_end: str,
+    fund_count: int,
+    row_count: int,
+) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "requested_start_date": requested_start,
+                "raw_available_start_date": raw_start,
+                "effective_start_date": effective_start,
+                "analysis_end_date": analysis_end,
+                "auto_adjusted": requested_start != effective_start,
+                "fund_count": fund_count,
+                "row_count": row_count,
+            }
+        ]
+    ).to_csv(path, index=False)
+    return path
+
+
+def _date_label(value: object) -> str:
+    return pd.Timestamp(value).date().isoformat()
 
 
 def _profile_weight_map(profile: str, custom_weights: dict[str, float] | None) -> dict[str, dict[str, float]]:

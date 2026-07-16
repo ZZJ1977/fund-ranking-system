@@ -270,6 +270,7 @@ def _run_analysis_job(
             processed_dir=processed_dir,
             portfolio_constraints=portfolio_constraints,
             custom_weights=custom_weights,
+            requested_start_date=start_date,
         )
         db.update_analysis_status(
             run_id,
@@ -497,6 +498,7 @@ def run_detail(run_id: int) -> str:
 
     report_path = Path(str(run["report_path"]))
     report_text = report_path.read_text(encoding="utf-8") if report_path.exists() else "报告文件不存在。"
+    analysis_window_path = Path(str(run["reports_dir"])) / "analysis_window.csv"
     ranking_path = Path(str(run["reports_dir"])) / f"ranking_{run['profile']}.csv"
     rows = _read_csv(ranking_path).head(int(run["top_n"])).to_dict(orient="records") if ranking_path.exists() else []
     ml_path = Path(str(run["reports_dir"])) / f"ranking_ml_{run['profile']}.csv"
@@ -539,6 +541,7 @@ def run_detail(run_id: int) -> str:
         run_id=run_id,
         run_status=status,
         data_stats=FundDatabase().nav_stats(run["codes"]),
+        cache_message=_analysis_window_message(_read_csv(analysis_window_path)),
         factor_weights=_normalize_factor_weights(run.get("factor_weights"), str(run["profile"])),
         use_custom_weights=bool(run.get("factor_weights")),
         portfolio_constraints=normalize_portfolio_constraints(run.get("portfolio_constraints")),
@@ -712,7 +715,29 @@ def _fetch_funds(
 def _read_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
-    return pd.read_csv(path, dtype={"fund": str})
+    try:
+        return pd.read_csv(path, dtype={"fund": str})
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
+
+
+def _analysis_window_message(frame: pd.DataFrame) -> str:
+    if frame.empty or "effective_start_date" not in frame.columns:
+        return ""
+
+    row = frame.iloc[0]
+    requested = str(row.get("requested_start_date", "")).strip()
+    effective = str(row.get("effective_start_date", "")).strip()
+    raw_start = str(row.get("raw_available_start_date", "")).strip()
+    analysis_end = str(row.get("analysis_end_date", "")).strip()
+    auto_value = row.get("auto_adjusted", False)
+    auto_adjusted = str(auto_value).strip().lower() in {"1", "true", "yes"}
+
+    if not effective or not analysis_end:
+        return ""
+    if auto_adjusted and requested and requested != effective:
+        return f"所选起始日期 {requested} 早于基金共同可用区间，系统已自动切换为 {effective} 至 {analysis_end} 统计（最早原始数据从 {raw_start} 开始）。"
+    return f"本次实际统计区间：{effective} 至 {analysis_end}。"
 
 
 def _factor_weights_from_values(

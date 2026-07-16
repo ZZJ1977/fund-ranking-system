@@ -11,6 +11,27 @@ from .metrics import calculate_metrics, daily_returns, max_drawdown
 from .portfolio import PortfolioConstraints, normalize_portfolio_constraints, optimize_constrained_portfolio, portfolio_turnover, _risk_parity_weights
 from .scoring import score_funds
 
+SUMMARY_COLUMNS = [
+    "annual_return",
+    "annual_volatility",
+    "max_drawdown",
+    "sharpe",
+    "win_rate",
+    "avg_turnover",
+]
+PERIOD_COLUMNS = [
+    "train_start",
+    "train_end",
+    "hold_start",
+    "hold_end",
+    "portfolio",
+    "fund_count",
+    "turnover",
+    "transaction_cost",
+    "selected_funds",
+    "holding_return",
+]
+
 
 def save_portfolio_backtest_outputs(
     nav: pd.DataFrame,
@@ -63,7 +84,7 @@ def rebalance_backtest(
     constraints = normalize_portfolio_constraints(constraints)
     nav = nav.sort_index().dropna(how="all").ffill()
     if len(nav) < lookback_days + holding_days:
-        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        return _empty_summary(), _empty_periods(), pd.DataFrame()
 
     return_frames: list[pd.DataFrame] = []
     period_rows: list[dict[str, object]] = []
@@ -133,14 +154,14 @@ def rebalance_backtest(
         start += step_days
 
     if not return_frames:
-        return pd.DataFrame(), pd.DataFrame(period_rows), pd.DataFrame()
+        return _empty_summary(), _period_frame(period_rows), pd.DataFrame()
     returns = pd.concat(return_frames).sort_index()
     returns = returns[~returns.index.duplicated(keep="first")]
     summary = _performance_summary(returns)
     if period_rows:
         turnover = pd.DataFrame(period_rows).groupby("portfolio")["turnover"].mean()
         summary["avg_turnover"] = turnover
-    return summary, pd.DataFrame(period_rows), returns
+    return summary, _period_frame(period_rows), returns
 
 
 def build_rebalance_report(
@@ -232,7 +253,21 @@ def _performance_summary(returns: pd.DataFrame) -> pd.DataFrame:
                 "win_rate": float((series > 0).mean()),
             }
         )
-    return pd.DataFrame(rows).set_index("portfolio")
+    if not rows:
+        return _empty_summary()
+    return pd.DataFrame(rows).set_index("portfolio").rename_axis("portfolio")
+
+
+def _empty_summary() -> pd.DataFrame:
+    return pd.DataFrame(columns=SUMMARY_COLUMNS).rename_axis("portfolio")
+
+
+def _empty_periods() -> pd.DataFrame:
+    return pd.DataFrame(columns=PERIOD_COLUMNS)
+
+
+def _period_frame(rows: list[dict[str, object]]) -> pd.DataFrame:
+    return pd.DataFrame(rows, columns=PERIOD_COLUMNS)
 
 
 def _plot_cumulative(returns: pd.DataFrame, path: Path) -> None:

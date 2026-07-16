@@ -29,6 +29,27 @@ def load_nav_csv(path: str | Path, date_col: str = "Date") -> pd.DataFrame:
     return frame
 
 
+def common_nav_start(nav: pd.DataFrame) -> pd.Timestamp | None:
+    """Return the first date where every fund has an available NAV value."""
+    first_dates = []
+    for fund in nav.columns:
+        first_date = nav[fund].first_valid_index()
+        if first_date is not None:
+            first_dates.append(pd.Timestamp(first_date))
+    if not first_dates:
+        return None
+    return max(first_dates)
+
+
+def align_nav_to_common_start(nav: pd.DataFrame) -> pd.DataFrame:
+    """Trim NAV data to the comparable window shared by all available funds."""
+    start = common_nav_start(nav)
+    if start is None:
+        return nav.copy()
+    aligned = nav.loc[nav.index >= start].copy()
+    return aligned.ffill().dropna(how="all")
+
+
 def generate_demo_nav(
     fund_count: int = 36,
     periods: int = 756,
@@ -78,4 +99,3 @@ def save_nav_csv(nav: pd.DataFrame, path: str | Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     nav.to_csv(path, index_label="Date")
     return path
-

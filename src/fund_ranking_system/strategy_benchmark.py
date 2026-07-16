@@ -81,7 +81,10 @@ def build_strategy_benchmark_report(benchmark: pd.DataFrame) -> str:
 def _load_scope(path: Path, scope: str, baseline: str) -> list[dict[str, object]]:
     if not path.exists():
         return []
-    frame = pd.read_csv(path)
+    try:
+        frame = pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        return []
     if frame.empty:
         return []
     if "portfolio" in frame.columns:

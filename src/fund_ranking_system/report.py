@@ -60,6 +60,9 @@ def build_report(
     figures: list[str],
     adaptive_scored: pd.DataFrame | None = None,
     adaptive_weights: pd.DataFrame | None = None,
+    requested_start: str | None = None,
+    effective_start: str | None = None,
+    analysis_end: str | None = None,
 ) -> str:
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     weight_lines = "\n".join(f"- `{metric}`: {weight:.0%}" for metric, weight in weights.items())
@@ -83,6 +86,10 @@ def build_report(
 ## 投资者画像
 
 `{profile}`
+
+## 统计区间
+
+{_analysis_window_text(requested_start, effective_start, analysis_end)}
 
 ## 基础画像权重
 
@@ -121,6 +128,22 @@ def save_report(report: str, path: str | Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(report, encoding="utf-8")
     return path
+
+
+def _analysis_window_text(
+    requested_start: str | None,
+    effective_start: str | None,
+    analysis_end: str | None,
+) -> str:
+    if not effective_start or not analysis_end:
+        return "本次报告使用输入净值数据中的有效日期区间进行统计。"
+    if requested_start and requested_start != effective_start:
+        return (
+            f"用户选择的起始日期为 `{requested_start}`，但所选基金的共同可用净值数据从 "
+            f"`{effective_start}` 开始。系统已自动切换为 `{effective_start}` 至 `{analysis_end}` "
+            "的可比区间进行统计。"
+        )
+    return f"本次报告使用 `{effective_start}` 至 `{analysis_end}` 的可比净值区间进行统计。"
 
 
 def _dynamic_weight_section(

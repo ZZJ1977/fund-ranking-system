@@ -44,6 +44,7 @@ MARKDOWN_REPORTS = [
 ]
 
 CSV_REPORTS = [
+    ("分析区间", "analysis_window.csv", "reports"),
     ("ML学习权重", "ml_learned_weights.csv", "reports"),
     ("基金级动态权重", "adaptive_factor_weights.csv", "reports"),
     ("动态权重排名", None, "reports"),
@@ -281,11 +282,19 @@ def _write_xlsx(reports_dir: Path, processed_dir: Path, profile: str, path: Path
         root = reports_dir if root_name == "reports" else processed_dir
         csv_path = root / str(actual_filename)
         if csv_path.exists():
-            frame = pd.read_csv(csv_path)
-            _add_frame_sheet(workbook, sheet_name, frame)
+            frame = _safe_read_csv(csv_path)
+            if not frame.empty or len(frame.columns) > 0:
+                _add_frame_sheet(workbook, sheet_name, frame)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(path)
+
+
+def _safe_read_csv(path: Path) -> pd.DataFrame:
+    try:
+        return pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
 
 
 def _add_frame_sheet(workbook: Workbook, sheet_name: str, frame: pd.DataFrame) -> None:

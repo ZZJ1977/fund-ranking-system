@@ -5,7 +5,9 @@ from pathlib import Path
 import pandas as pd
 
 from fund_ranking_system.data_quality import build_data_quality_diagnostics, save_data_quality_outputs
+from fund_ranking_system.portfolio_backtest import save_portfolio_backtest_outputs
 from fund_ranking_system.strategy_benchmark import build_strategy_benchmark, save_strategy_benchmark_outputs
+from fund_ranking_system.validation import save_walk_forward_outputs
 
 
 class ProductReadinessTest(unittest.TestCase):
@@ -45,6 +47,32 @@ class ProductReadinessTest(unittest.TestCase):
 
             self.assertIn("excess_annual_return", benchmark.columns)
             self.assertIn("策略回测基准对比", report_path.read_text(encoding="utf-8"))
+
+    def test_short_or_small_pool_backtests_write_headers(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            reports_dir = Path(tmpdir)
+            dates = pd.date_range("2025-01-01", periods=90)
+            nav = pd.DataFrame(
+                {
+                    "159325": 1 + pd.Series(range(90), dtype=float).to_numpy() / 1000,
+                    "588170": 1 + pd.Series(range(90), dtype=float).to_numpy() / 1200,
+                },
+                index=dates,
+            )
+            weights = {
+                "annual_return": 0.2,
+                "sharpe": 0.25,
+                "max_drawdown": 0.2,
+                "calmar": 0.1,
+                "annual_volatility": 0.1,
+                "rolling_positive_ratio": 0.15,
+            }
+
+            _, walk_periods, _, _ = save_walk_forward_outputs(nav, weights, reports_dir)
+            _, rebalance_periods, _, _ = save_portfolio_backtest_outputs(nav, weights, reports_dir)
+
+            self.assertIn("hold_start", walk_periods.read_text(encoding="utf-8"))
+            self.assertIn("hold_start", rebalance_periods.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

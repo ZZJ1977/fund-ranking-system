@@ -10,6 +10,27 @@ from .chart_style import GRID, PALETTE, empty_plot, figure_axes, finish_figure, 
 from .metrics import calculate_metrics, daily_returns, max_drawdown
 from .scoring import score_funds
 
+SUMMARY_COLUMNS = ["annual_return", "annual_volatility", "max_drawdown", "sharpe", "win_rate"]
+WALK_FORWARD_PERIOD_COLUMNS = [
+    "train_start",
+    "train_end",
+    "hold_start",
+    "hold_end",
+    "portfolio",
+    "fund_count",
+    "holding_return",
+]
+ADAPTIVE_PERIOD_COLUMNS = [
+    "train_start",
+    "train_end",
+    "hold_start",
+    "hold_end",
+    "portfolio",
+    "fund_count",
+    "selected_funds",
+    "holding_return",
+]
+
 
 def walk_forward_backtest(
     nav: pd.DataFrame,
@@ -24,7 +45,7 @@ def walk_forward_backtest(
     """Run a walk-forward out-of-sample validation on NAV data."""
     nav = nav.sort_index().dropna(how="all").ffill()
     if len(nav) < lookback_days + holding_days:
-        return pd.DataFrame(), pd.DataFrame()
+        return _empty_summary(), _empty_periods(WALK_FORWARD_PERIOD_COLUMNS)
 
     portfolio_returns: list[pd.Series] = []
     period_rows: list[dict[str, object]] = []
@@ -63,11 +84,11 @@ def walk_forward_backtest(
         start += step_days
 
     if not portfolio_returns:
-        return pd.DataFrame(), pd.DataFrame(period_rows)
+        return _empty_summary(), _period_frame(period_rows, WALK_FORWARD_PERIOD_COLUMNS)
     returns = pd.concat(portfolio_returns).sort_index()
     returns = returns[~returns.index.duplicated(keep="first")]
     summary = _performance_summary(returns)
-    return summary, pd.DataFrame(period_rows)
+    return summary, _period_frame(period_rows, WALK_FORWARD_PERIOD_COLUMNS)
 
 
 def save_walk_forward_outputs(
@@ -113,7 +134,7 @@ def adaptive_walk_forward_backtest(
     """Validate whether fund-level dynamic weights improve Top-N selection."""
     nav = nav.sort_index().dropna(how="all").ffill()
     if len(nav) < lookback_days + holding_days:
-        return pd.DataFrame(), pd.DataFrame()
+        return _empty_summary(), _empty_periods(ADAPTIVE_PERIOD_COLUMNS)
 
     portfolio_returns: list[pd.DataFrame] = []
     period_rows: list[dict[str, object]] = []
@@ -157,10 +178,10 @@ def adaptive_walk_forward_backtest(
         start += step_days
 
     if not portfolio_returns:
-        return pd.DataFrame(), pd.DataFrame(period_rows)
+        return _empty_summary(), _period_frame(period_rows, ADAPTIVE_PERIOD_COLUMNS)
     returns = pd.concat(portfolio_returns).sort_index()
     returns = returns[~returns.index.duplicated(keep="first")]
-    return _performance_summary(returns), pd.DataFrame(period_rows)
+    return _performance_summary(returns), _period_frame(period_rows, ADAPTIVE_PERIOD_COLUMNS)
 
 
 def save_adaptive_walk_forward_outputs(
@@ -313,7 +334,21 @@ def _performance_summary(returns: pd.DataFrame) -> pd.DataFrame:
                 "win_rate": float((series > 0).mean()),
             }
         )
-    return pd.DataFrame(rows).set_index("portfolio")
+    if not rows:
+        return _empty_summary()
+    return pd.DataFrame(rows).set_index("portfolio").rename_axis("portfolio")
+
+
+def _empty_summary() -> pd.DataFrame:
+    return pd.DataFrame(columns=SUMMARY_COLUMNS).rename_axis("portfolio")
+
+
+def _empty_periods(columns: list[str]) -> pd.DataFrame:
+    return pd.DataFrame(columns=columns)
+
+
+def _period_frame(rows: list[dict[str, object]], columns: list[str]) -> pd.DataFrame:
+    return pd.DataFrame(rows, columns=columns)
 
 
 def _plot_cumulative_returns(

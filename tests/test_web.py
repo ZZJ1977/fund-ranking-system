@@ -4,6 +4,7 @@ import pandas as pd
 
 from fund_ranking_system.portfolio import PortfolioConstraints
 from fund_ranking_system.web import (
+    _analysis_window_message,
     _lime_explanation_table,
     _lime_preview_rows,
     _page,
@@ -131,6 +132,25 @@ class WebTest(unittest.TestCase):
         payload = health()
 
         self.assertEqual(payload["status"], "ok")
+
+    def test_analysis_window_message_explains_auto_adjusted_start(self):
+        frame = pd.DataFrame(
+            [
+                {
+                    "requested_start_date": "2021-01-01",
+                    "raw_available_start_date": "2024-10-31",
+                    "effective_start_date": "2025-03-24",
+                    "analysis_end_date": "2026-07-15",
+                    "auto_adjusted": True,
+                }
+            ]
+        )
+
+        message = _analysis_window_message(frame)
+
+        self.assertIn("2021-01-01", message)
+        self.assertIn("2025-03-24", message)
+        self.assertIn("自动切换", message)
 
     def test_fund_detail_sections_render(self):
         row = pd.Series(

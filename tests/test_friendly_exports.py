@@ -62,6 +62,29 @@ class FriendlyExportsTest(unittest.TestCase):
             self.assertIn("组合建议明细", workbook.sheetnames)
             self.assertIn("组合风险控制", workbook.sheetnames)
 
+    def test_save_friendly_exports_skips_blank_optional_csv(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            reports_dir = root / "reports"
+            processed_dir = root / "processed"
+            reports_dir.mkdir()
+            processed_dir.mkdir()
+            (reports_dir / "fund_analysis_report.md").write_text("# 主报告\n\n样例", encoding="utf-8")
+            (reports_dir / "walk_forward_periods.csv").write_text("\n", encoding="utf-8")
+            pd.DataFrame(
+                {"fund": ["159325"], "rank": [1], "composite_score": [80.0]}
+            ).to_csv(reports_dir / "ranking_balanced.csv", index=False)
+            pd.DataFrame(
+                {"fund": ["159325"], "annual_return": [0.1]}
+            ).to_csv(processed_dir / "fund_metrics.csv", index=False)
+
+            _, _, xlsx_path = save_friendly_exports(reports_dir, processed_dir, profile="balanced")
+
+            self.assertTrue(xlsx_path.exists())
+            workbook = load_workbook(xlsx_path, read_only=True)
+            self.assertIn("当前画像排名", workbook.sheetnames)
+            self.assertNotIn("WalkForward窗口", workbook.sheetnames)
+
 
 if __name__ == "__main__":
     unittest.main()
