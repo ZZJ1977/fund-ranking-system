@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import html
 import socket
-from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote, urlencode
 
@@ -17,6 +16,7 @@ from .metadata import display_fund
 from .portfolio import PORTFOLIO_OBJECTIVES, PortfolioConstraints, normalize_portfolio_constraints
 from .scoring import DEFAULT_PROFILES, SCORE_METRICS
 from .storage import FundDatabase
+from .time_utils import display_time, local_now
 
 WEB_RAW_DIR = Path("data/raw/web")
 WEB_REPORTS_DIR = Path("reports/web")
@@ -212,7 +212,7 @@ def analyze(
             )
         )
 
-    run_slug = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    run_slug = local_now().strftime("%Y%m%d_%H%M%S_%f")
     reports_dir = WEB_REPORTS_DIR / "runs" / run_slug
     processed_dir = WEB_PROCESSED_DIR / "runs" / run_slug
     report_path = reports_dir / "fund_analysis_report.md"
@@ -2463,7 +2463,7 @@ def _pool_manager_section(pools: list[dict[str, object]]) -> str:
         "<tr>"
         f"<td>{html.escape(str(pool['name']))}</td>"
         f"<td>{html.escape(' '.join(pool['codes']))}</td>"
-        f"<td>{html.escape(str(pool['updated_at']))}</td>"
+        f"<td>{html.escape(display_time(pool['updated_at']))}</td>"
         f"<td><form method=\"post\" action=\"/pools/delete\" style=\"display:block;padding:0;border:0;background:transparent;\"><input type=\"hidden\" name=\"pool_name\" value=\"{html.escape(str(pool['name']))}\"><button class=\"secondary\" type=\"submit\">删除</button></form></td>"
         "</tr>"
         for pool in pools
@@ -2503,7 +2503,7 @@ def _preset_manager_section(presets: list[dict[str, object]]) -> str:
         f"<td>{html.escape(str(item['name']))}</td>"
         f"<td>{html.escape(str(item.get('profile', '')))}</td>"
         f"<td>{_preset_weight_summary(item.get('factor_weights', {}))}</td>"
-        f"<td>{html.escape(str(item.get('updated_at', '')))}</td>"
+        f"<td>{html.escape(display_time(item.get('updated_at', '')))}</td>"
         f"<td><form method=\"post\" action=\"/presets/delete\" style=\"display:block;padding:0;border:0;background:transparent;\"><input type=\"hidden\" name=\"preset_name\" value=\"{html.escape(str(item['name']))}\"><button class=\"secondary\" type=\"submit\">删除</button></form></td>"
         "</tr>"
         for item in presets
@@ -2576,7 +2576,7 @@ def _history_row(run: dict[str, object]) -> str:
     )
     return (
         "<tr>"
-        f"<td>{html.escape(str(run['created_at']))}</td>"
+        f"<td>{html.escape(display_time(run['created_at']))}</td>"
         f"<td>{_status_badge(str(run.get('status', 'success')))}</td>"
         f"<td>{html.escape(' '.join(run['codes']))}</td>"
         f"<td>{html.escape(str(run['start_date']))}</td>"

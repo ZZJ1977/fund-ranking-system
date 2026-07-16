@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+
+from .time_utils import now_text
 
 
 DEFAULT_DB_PATH = Path(os.environ.get("FUND_RANKING_DB", "data/fund_ranking.db"))
@@ -481,7 +482,7 @@ class FundDatabase:
 
 
 def _now() -> str:
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return now_text()
 
 
 def _encode_constraints(value: dict[str, object] | str | None) -> str:

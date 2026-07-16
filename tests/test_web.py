@@ -15,6 +15,7 @@ from fund_ranking_system.web import (
     _fund_dynamic_weight_section,
     _fund_link,
     _fund_metric_cards,
+    _history_row,
     _missing_metadata_codes,
     health,
 )
@@ -131,6 +132,24 @@ class WebTest(unittest.TestCase):
 
         self.assertIn('http-equiv="refresh"', html)
         self.assertIn("分析任务运行中", html)
+
+    def test_history_row_displays_beijing_time_for_legacy_utc(self):
+        html = _history_row(
+            {
+                "id": 1,
+                "created_at": "2026-07-16 05:51:29",
+                "codes": ["159325", "588170"],
+                "start_date": "2021-01-01",
+                "profile": "balanced",
+                "top_n": 10,
+                "status": "success",
+                "portfolio_constraints": {},
+                "factor_weights": {},
+            }
+        )
+
+        self.assertIn("2026-07-16 13:51:29", html)
+        self.assertNotIn("2026-07-16 05:51:29", html)
 
     def test_lime_preview_rows_groups_factors(self):
         explanations = pd.DataFrame(

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
 from .adaptive_weights import adaptive_weight_snapshot
 from .metadata import display_fund
+from .time_utils import local_now
 
 
 def _pct(value: float) -> str:
@@ -64,7 +64,7 @@ def build_report(
     effective_start: str | None = None,
     analysis_end: str | None = None,
 ) -> str:
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    generated_at = local_now().strftime("%Y-%m-%d %H:%M")
     weight_lines = "\n".join(f"- `{metric}`: {weight:.0%}" for metric, weight in weights.items())
     figure_lines = "\n".join(f"- `{figure}`" for figure in figures)
     top_row = scored.iloc[0]

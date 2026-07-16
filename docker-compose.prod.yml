@@ -12,6 +12,7 @@ services:
     env_file:
       - .env.production
     environment:
+      TZ: Asia/Shanghai
       FUND_RANKING_HOST: 0.0.0.0
       FUND_RANKING_PORT: 8000
     healthcheck:
@@ -28,6 +29,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    environment:
+      TZ: Asia/Shanghai
     ports:
       - "${PUBLIC_HTTP_PORT:-80}:80"
     volumes:
