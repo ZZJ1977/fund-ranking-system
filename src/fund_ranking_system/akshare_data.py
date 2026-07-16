@@ -9,7 +9,7 @@ from .metadata import infer_fund_type
 
 
 def fetch_open_fund_list() -> pd.DataFrame:
-    fund_list = ak.fund_open_fund_daily_em()
+    fund_list = ak.fund_name_em()
     required_columns = {"基金代码", "基金简称"}
     missing = required_columns - set(fund_list.columns)
     if missing:
@@ -17,16 +17,21 @@ def fetch_open_fund_list() -> pd.DataFrame:
 
     normalized = fund_list.copy()
     normalized["基金代码"] = normalized["基金代码"].astype(str).str.zfill(6)
-    return normalized
+    if "基金类型" not in normalized.columns:
+        normalized["基金类型"] = normalized["基金简称"].apply(infer_fund_type)
+    normalized["基金类型"] = normalized["基金类型"].replace("", pd.NA)
+    normalized["基金类型"] = normalized["基金类型"].fillna(normalized["基金简称"].apply(infer_fund_type))
+    return normalized[["基金代码", "基金简称", "基金类型"]].drop_duplicates("基金代码")
 
 
 def fetch_fund_metadata(codes: list[str]) -> pd.DataFrame:
     fund_list = fetch_open_fund_list()
     normalized_codes = {code.zfill(6) for code in codes}
-    metadata = fund_list[["基金代码", "基金简称"]].copy()
+    metadata = fund_list[["基金代码", "基金简称", "基金类型"]].copy()
     metadata = metadata[metadata["基金代码"].isin(normalized_codes)]
     metadata = metadata.rename(columns={"基金代码": "fund_code", "基金简称": "fund_name"})
-    metadata["fund_type"] = metadata["fund_name"].apply(infer_fund_type)
+    metadata = metadata.rename(columns={"基金类型": "fund_type"})
+    metadata["fund_type"] = metadata["fund_type"].fillna(metadata["fund_name"].apply(infer_fund_type))
     return metadata.sort_values("fund_code")
 
 
@@ -39,9 +44,10 @@ def search_funds(keyword: str, limit: int = 20) -> pd.DataFrame:
     mask = fund_list["基金代码"].str.contains(keyword, na=False) | fund_list["基金简称"].str.contains(
         keyword, na=False
     )
-    result = fund_list.loc[mask, ["基金代码", "基金简称"]].head(limit).copy()
+    result = fund_list.loc[mask, ["基金代码", "基金简称", "基金类型"]].head(limit).copy()
     result = result.rename(columns={"基金代码": "fund_code", "基金简称": "fund_name"})
-    result["fund_type"] = result["fund_name"].apply(infer_fund_type)
+    result = result.rename(columns={"基金类型": "fund_type"})
+    result["fund_type"] = result["fund_type"].fillna(result["fund_name"].apply(infer_fund_type))
     return result
 
 

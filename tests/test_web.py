@@ -13,7 +13,9 @@ from fund_ranking_system.web import (
     _resolve_codes,
     _standalone_page,
     _fund_dynamic_weight_section,
+    _fund_link,
     _fund_metric_cards,
+    _missing_metadata_codes,
     health,
 )
 
@@ -107,6 +109,22 @@ class WebTest(unittest.TestCase):
         )
 
         self.assertIn('/runs/7/funds/000011', html)
+
+    def test_fund_link_hides_duplicate_code_name(self):
+        html = _fund_link({"fund": "159325", "fund_name": "159325"}, run_id=1)
+
+        self.assertIn(">159325<", html)
+        self.assertNotIn("159325 159325", html)
+
+    def test_missing_metadata_codes_treats_code_name_as_missing(self):
+        metadata = pd.DataFrame(
+            {
+                "fund_code": ["159325", "588170"],
+                "fund_name": ["159325", "科创半导体ETF华夏"],
+            }
+        )
+
+        self.assertEqual(_missing_metadata_codes(metadata, ["159325", "588170"]), ["159325"])
 
     def test_running_page_auto_refreshes(self):
         html = _page(run_status="running", run_id=1)

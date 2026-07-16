@@ -13,6 +13,7 @@ from fastapi import BackgroundTasks, FastAPI, Form, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 from .pipeline import run_pipeline
+from .metadata import display_fund
 from .portfolio import PORTFOLIO_OBJECTIVES, PortfolioConstraints, normalize_portfolio_constraints
 from .scoring import DEFAULT_PROFILES, SCORE_METRICS
 from .storage import FundDatabase
@@ -574,8 +575,7 @@ def fund_detail(run_id: int, fund: str) -> str:
     base_row = _find_fund_row(ranking if not ranking.empty else metrics, selected)
     if base_row is None:
         raise HTTPException(status_code=404, detail="Fund not found in this run.")
-    fund_name = str(base_row.get("fund_name", ""))
-    title = f"{_display_code(selected)} {fund_name}".strip()
+    title = display_fund(_display_code(selected), base_row)
 
     body = "\n".join(
         [
@@ -695,11 +695,17 @@ def _fetch_funds(
     db = FundDatabase()
     cached_codes = db.cached_codes(codes, start_date)
     missing_codes = [code for code in codes if code not in cached_codes]
+    metadata_codes = _missing_metadata_codes(db.load_metadata(codes), codes)
+
+    if metadata_codes:
+        try:
+            metadata = fetch_fund_metadata(metadata_codes)
+            db.save_metadata(metadata)
+        except Exception:
+            pass
 
     if missing_codes:
-        metadata = fetch_fund_metadata(missing_codes)
         nav = fetch_many_funds(missing_codes, start_date, sleep_seconds=0.2)
-        db.save_metadata(metadata)
         db.save_nav(nav)
 
     nav = db.load_nav(codes, start_date)
@@ -710,6 +716,19 @@ def _fetch_funds(
     nav.to_csv(nav_path, index_label="Date")
     metadata.to_csv(metadata_path, index=False)
     return f"缓存命中 {len(cached_codes)} 只，远程补抓 {len(missing_codes)} 只。"
+
+
+def _missing_metadata_codes(metadata: pd.DataFrame, codes: list[str]) -> list[str]:
+    if metadata.empty:
+        return codes
+
+    valid_codes: set[str] = set()
+    for row in metadata.itertuples(index=False):
+        code = _normalize_fund_key(getattr(row, "fund_code", ""))
+        name = str(getattr(row, "fund_name", "") or "").strip()
+        if code and name and name != code:
+            valid_codes.add(code)
+    return [code for code in codes if code not in valid_codes]
 
 
 def _read_csv(path: Path) -> pd.DataFrame:
@@ -1507,11 +1526,16 @@ def _page(
 
 def _fund_link(row: dict[str, object], run_id: int | None) -> str:
     fund = _normalize_fund_key(row.get("fund", ""))
-    label = f"{_display_code(fund)} {row.get('fund_name', '')}".strip()
+    label = _fund_label(row)
     safe_label = html.escape(label)
     if run_id is None or not fund:
         return safe_label
     return f'<a href="/runs/{run_id}/funds/{quote(fund)}">{safe_label}</a>'
+
+
+def _fund_label(row: dict[str, object]) -> str:
+    fund = _normalize_fund_key(row.get("fund", row.get("fund_code", "")))
+    return display_fund(_display_code(fund), pd.Series({"fund_name": row.get("fund_name", "")}))
 
 
 def _ranking_table(rows: list[dict[str, object]], run_id: int | None = None) -> str:
@@ -1637,7 +1661,7 @@ def _adaptive_weight_table(rows: list[dict[str, object]]) -> str:
 
     body = "\n".join(
         "<tr>"
-        f"<td class=\"fund-cell\">{html.escape(str(row.get('fund', '')))} {html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td class=\"fund-cell\">{html.escape(_fund_label(row))}</td>"
         f"<td class=\"num\">{float(row.get('annual_return', 0)):.1%}</td>"
         f"<td class=\"num\">{float(row.get('sharpe', 0)):.1%}</td>"
         f"<td class=\"num\">{float(row.get('max_drawdown', 0)):.1%}</td>"
@@ -1751,7 +1775,7 @@ def _data_quality_diagnostics_table(rows: list[dict[str, object]]) -> str:
         return ""
     body = "\n".join(
         "<tr>"
-        f"<td class=\"fund-cell\">{html.escape(str(row.get('fund', '')))} {html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td class=\"fund-cell\">{html.escape(_fund_label(row))}</td>"
         f"<td>{html.escape(str(row.get('fund_type', '')))}</td>"
         f"<td class=\"num\">{_format_percent(row.get('completeness'))}</td>"
         f"<td class=\"num\">{_format_metric(row.get('missing_days'), digits=0)}</td>"
@@ -1838,7 +1862,7 @@ def _portfolio_recommendation_table(rows: list[dict[str, object]]) -> str:
 
     body = "\n".join(
         "<tr>"
-        f"<td class=\"fund-cell\">{html.escape(str(row.get('fund', '')))} {html.escape(str(row.get('fund_name', '')))}</td>"
+        f"<td class=\"fund-cell\">{html.escape(_fund_label(row))}</td>"
         f"<td>{html.escape(str(row.get('fund_type', '')))}</td>"
         f"<td class=\"num\">{_format_percent(row.get('weight'))}</td>"
         f"<td class=\"reason-cell\">{html.escape(str(row.get('selection_reason', '')))}</td>"
