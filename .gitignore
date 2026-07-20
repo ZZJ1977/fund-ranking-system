@@ -6,7 +6,6 @@ __pycache__/
 .DS_Store
 .env
 .env.local
-.env.production
 *.db
 *.sqlite
 *.sqlite3
@@ -31,5 +30,3 @@ reports/web/
 !docs/sample_outputs/*.pdf
 !docs/sample_outputs/*.xlsx
 !docs/sample_outputs/*.png
-deploy/secrets/.htpasswd
-deploy/runtime/

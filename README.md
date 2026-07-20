@@ -10,7 +10,7 @@
 
 A local-first mutual fund risk-return research workstation for China's public fund market. It fetches real NAV data through AkShare, caches it in SQLite, ranks funds with transparent multi-factor and ML-assisted models, checks data quality and model effectiveness, compares strategies against benchmarks, and exports Word/PDF/Excel reports.
 
-[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Aliyun HK Deployment](docs/aliyun_hk_deployment.md) · [Deployment Checklist](docs/deployment_checklist.md) · [Sample Outputs](docs/sample_outputs/README.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
+[中文说明](README.zh-CN.md) · [Changelog](CHANGELOG.md) · [Local Deployment](docs/local_deployment.md) · [Sample Outputs](docs/sample_outputs/README.md) · [Demo Guide](docs/demo_guide.md) · [Project Report](docs/project_report.md) · [100-Fund Validation](docs/real_world_validation.md) · [Contributing](CONTRIBUTING.md)
 
 > This project is for historical performance analysis and research assistance only. It is not personalized investment advice, a return guarantee, or a buy/sell signal.
 
@@ -305,8 +305,6 @@ fund-ranking-system
 - Word report sample: [analysis_reports.docx](docs/sample_outputs/analysis_reports.docx)
 - PDF report sample: [analysis_reports.pdf](docs/sample_outputs/analysis_reports.pdf)
 - Excel workbook sample: [analysis_data.xlsx](docs/sample_outputs/analysis_data.xlsx)
-- Deployment proof: [docs/deployment_checklist.md](docs/deployment_checklist.md)
-
 - `data/raw/demo_fund_nav.csv`
 - `data/raw/fund_metadata.csv`
 - `data/processed/fund_metrics.csv`
@@ -408,8 +406,6 @@ In this sample, the top-ranked portfolios still had negative returns, but they s
 
 - Add scheduled background updates for selected fund pools.
 - Add richer fund metadata, such as manager tenure, fee level, fee structure, and fund size.
-- Add optional user authentication before any public deployment.
-- Add stricter production observability: structured logs, task queue monitoring, and error tracking.
 - Add documentation link checks and Docker health checks in CI.
 
 ## Test
